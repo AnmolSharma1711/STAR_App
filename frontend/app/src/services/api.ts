@@ -33,4 +33,12 @@ export const api = {
     }
     return response.json();
   },
+
+  async getHomePageData(): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/api/home/`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch home page data');
+    }
+    return response.json();
+  },
 };
