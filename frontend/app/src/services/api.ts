@@ -19,7 +19,10 @@ export interface ApiInfoResponse {
 
 export const api = {
   async healthCheck(): Promise<HealthCheckResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/health/`);
+    const response = await fetch(`${API_BASE_URL}/api/health/`, {
+      mode: 'cors',
+      credentials: 'include',
+    });
     if (!response.ok) {
       throw new Error('Health check failed');
     }
@@ -27,7 +30,10 @@ export const api = {
   },
 
   async getInfo(): Promise<ApiInfoResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/info/`);
+    const response = await fetch(`${API_BASE_URL}/api/info/`, {
+      mode: 'cors',
+      credentials: 'include',
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch API info');
     }
@@ -35,7 +41,10 @@ export const api = {
   },
 
   async getHomePageData(): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/api/home/`);
+    const response = await fetch(`${API_BASE_URL}/api/home/`, {
+      mode: 'cors',
+      credentials: 'include',
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch home page data');
     }

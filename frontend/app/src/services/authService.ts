@@ -66,6 +66,8 @@ export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     const response = await fetch(`${API_BASE_URL}/api/auth/login/`, {
       method: 'POST',
+      mode: 'cors',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -94,6 +96,8 @@ export const authService = {
       try {
         await fetch(`${API_BASE_URL}/api/auth/logout/`, {
           method: 'POST',
+          mode: 'cors',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${this.getAccessToken()}`,
@@ -118,6 +122,8 @@ export const authService = {
 
     const response = await fetch(`${API_BASE_URL}/api/auth/token/refresh/`, {
       method: 'POST',
+      mode: 'cors',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -138,6 +144,8 @@ export const authService = {
   // Get user profile
   async getProfile(): Promise<User> {
     const response = await fetch(`${API_BASE_URL}/api/auth/profile/`, {
+      mode: 'cors',
+      credentials: 'include',
       headers: {
         'Authorization': `Bearer ${this.getAccessToken()}`,
       },
@@ -160,6 +168,8 @@ export const authService = {
 
     const response = await fetch(url, {
       ...options,
+      mode: 'cors',
+      credentials: 'include',
       headers: {
         ...options.headers,
         'Authorization': `Bearer ${token}`,
@@ -173,6 +183,8 @@ export const authService = {
         // Retry request with new token
         return fetch(url, {
           ...options,
+          mode: 'cors',
+          credentials: 'include',
           headers: {
             ...options.headers,
             'Authorization': `Bearer ${newToken}`,
