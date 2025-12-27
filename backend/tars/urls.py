@@ -23,13 +23,19 @@ from rest_framework.routers import DefaultRouter
 from . import views
 from . import auth_views
 from rest_framework_simplejwt.views import TokenRefreshView
-from core.views import SiteSettingsViewSet, SponsorViewSet, SocialLinkViewSet, home_page_data
+from core.views import (
+    SiteSettingsViewSet, SponsorViewSet, SocialLinkViewSet,
+    ClassViewSet, ResourceViewSet, home_page_data, member_portal_data,
+    increment_download
+)
 
 # Create router for viewsets
 router = DefaultRouter()
 router.register(r'site-settings', SiteSettingsViewSet)
 router.register(r'sponsors', SponsorViewSet)
 router.register(r'social-links', SocialLinkViewSet)
+router.register(r'classes', ClassViewSet)
+router.register(r'resources', ResourceViewSet)
 
 # Customize admin site headers
 admin.site.site_header = "TARS Club Administration"
@@ -50,7 +56,13 @@ urlpatterns = [
     # Home page data
     path("api/home/", home_page_data, name="home_page_data"),
     
-    # API router (includes site-settings, sponsors, social-links)
+    # Member portal data
+    path("api/portal/", member_portal_data, name="member_portal_data"),
+    
+    # Increment download count
+    path("api/resources/<int:resource_id>/download/", increment_download, name="increment_download"),
+    
+    # API router (includes site-settings, sponsors, social-links, classes, resources)
     path("api/", include(router.urls)),
     
     # Authentication

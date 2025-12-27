@@ -2,40 +2,73 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import type { User } from '../services/authService';
-import { api } from '../services/api';
-import type { HealthCheckResponse } from '../services/api';
+import { api, type ClassData, type ResourceData } from '../services/api';
+import { ShootingStars } from './ui/shooting-stars';
+import { StarsBackground } from './ui/stars-background';
+import { FocusCards } from './ui/focus-cards';
+import type { Card } from './ui/focus-cards';
 import './Portal.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+const resolveMediaUrl = (value?: string) => {
+  if (!value) return undefined;
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${API_BASE_URL}${value}`;
+};
+
 function Portal() {
   const [user, setUser] = useState<User | null>(null);
-  const [healthStatus, setHealthStatus] = useState<HealthCheckResponse | null>(null);
+  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [resources, setResources] = useState<ResourceData[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     loadUserData();
-    checkHealth();
+    loadPortalData();
+    
+    // Fallback timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      console.log('Timeout: forcing loading to false');
+      setLoading(false);
+    }, 10000); // 10 seconds
+    
+    return () => clearTimeout(timeout);
   }, []);
 
   const loadUserData = async () => {
     try {
       const userData = authService.getUser();
       setUser(userData);
-      setLoading(false);
     } catch (error) {
       console.error('Failed to load user:', error);
       handleLogout();
     }
   };
 
-  const checkHealth = async () => {
+  const loadPortalData = async () => {
     try {
-      const status = await api.healthCheck();
-      setHealthStatus(status);
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        console.log('No token found, redirecting to login');
+        navigate('/login');
+        return;
+      }
+      
+      console.log('Fetching portal data with token...');
+      const data = await api.getMemberPortalData(token);
+      console.log('Portal data received:', data);
+      setClasses(data.classes);
+      setResources(data.resources);
     } catch (error) {
-      console.error('Health check failed:', error);
+      console.error('Failed to load portal data:', error);
+      // Set empty data on error so page still loads
+      setClasses([]);
+      setResources([]);
+    } finally {
+      console.log('Setting loading to false');
+      setLoading(false);
     }
   };
 
@@ -48,19 +81,79 @@ function Portal() {
     }
   };
 
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'upcoming': return 'badge-upcoming';
+      case 'ongoing': return 'badge-ongoing';
+      case 'completed': return 'badge-completed';
+      default: return 'badge-default';
+    }
+  };
+
+  const getDifficultyBadgeClass = (difficulty: string) => {
+    switch (difficulty) {
+      case 'beginner': return 'badge-beginner';
+      case 'intermediate': return 'badge-intermediate';
+      case 'advanced': return 'badge-advanced';
+      default: return 'badge-default';
+    }
+  };
+
+  const handleDownload = async (resourceId: number, downloadUrl: string) => {
+    try {
+      console.log('Download clicked for resource:', resourceId);
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        console.log('Incrementing download count...');
+        // Increment download count
+        const result = await api.incrementDownload(resourceId, token);
+        console.log('Download count incremented:', result);
+        
+        // Update local state
+        setResources(prevResources => 
+          prevResources.map(r => 
+            r.id === resourceId 
+              ? { ...r, download_count: r.download_count + 1 }
+              : r
+          )
+        );
+      } else {
+        console.error('No token found');
+      }
+      
+      // Open download link
+      window.open(downloadUrl, '_blank');
+    } catch (error) {
+      console.error('Failed to track download:', error);
+      // Still open the download even if tracking fails
+      window.open(downloadUrl, '_blank');
+    }
+  };
+
   if (loading) {
     return (
-      <div className="portal-container">
-        <div className="loading">Loading...</div>
+      <div className="portal-container" style={{ 
+        minHeight: '100vh', 
+        width: '100%',
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+      }}>
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading portal...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="portal-container">
+      <ShootingStars />
+      <StarsBackground />
       <nav className="portal-navbar">
         <div className="navbar-brand">
-          <h1>TARS Club Portal</h1>
+          <h1>TARS Member Portal</h1>
         </div>
         <div className="navbar-user">
           <span className="user-name">
@@ -73,57 +166,136 @@ function Portal() {
       </nav>
 
       <main className="portal-content">
-        <div className="welcome-section">
-          <h2>Welcome to TARS Club Member Portal</h2>
-          <p>You have successfully logged in to the club management system.</p>
-        </div>
-
-        <div className="info-grid">
-          <div className="info-card">
-            <h3>👤 Your Profile</h3>
-            <div className="info-details">
-              <p><strong>Username:</strong> {user?.username}</p>
-              <p><strong>Email:</strong> {user?.email}</p>
-              <p><strong>Name:</strong> {user?.first_name} {user?.last_name}</p>
-              <p><strong>Role:</strong> {user?.is_staff ? 'Admin' : 'Member'}</p>
-            </div>
+        {/* Classes Section */}
+        <section className="portal-section">
+          <div className="section-header">
+            <h2>📚 Available Classes</h2>
+            <p className="section-subtitle">
+              {classes.length} {classes.length === 1 ? 'class' : 'classes'} available
+            </p>
           </div>
 
-          <div className="info-card">
-            <h3>🔧 System Status</h3>
-            <div className="info-details">
-              {healthStatus ? (
+          {classes.length === 0 ? (
+            <div className="empty-state">
+              <p>No classes available at the moment.</p>
+              <p className="text-muted">Check back later for new workshops and training sessions!</p>
+            </div>
+          ) : (
+            <FocusCards cards={classes.map((classItem) => ({
+              title: classItem.title,
+              src: resolveMediaUrl(classItem.thumbnail) || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800',
+              description: classItem.description,
+              badges: (
                 <>
-                  <p><strong>Backend:</strong> <span className="status-active">● Active</span></p>
-                  <p><strong>Database:</strong> <span className="status-active">● {healthStatus.database}</span></p>
-                  <p><strong>Service:</strong> {healthStatus.service}</p>
+                  <span className={`badge ${getStatusBadgeClass(classItem.status)}`}>
+                    {classItem.status_display}
+                  </span>
+                  <span className={`badge ${getDifficultyBadgeClass(classItem.difficulty)}`}>
+                    {classItem.difficulty_display}
+                  </span>
                 </>
-              ) : (
-                <p>Checking system status...</p>
-              )}
-            </div>
+              ),
+              meta: (
+                <>
+                  <div className="meta-item">
+                    <span className="meta-icon">👨‍🏫</span>
+                    <span>{classItem.instructor}</span>
+                  </div>
+                  <div className="meta-item">
+                    <span className="meta-icon">📅</span>
+                    <span>{classItem.start_date_formatted}</span>
+                  </div>
+                  <div className="meta-item">
+                    <span className="meta-icon">⏱️</span>
+                    <span>{classItem.duration}</span>
+                  </div>
+                </>
+              ),
+              actions: (
+                <>
+                  {classItem.meeting_link && (
+                    <a 
+                      href={classItem.meeting_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-primary"
+                    >
+                      Join Class
+                    </a>
+                  )}
+                  {classItem.syllabus && (
+                    <a 
+                      href={resolveMediaUrl(classItem.syllabus)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-secondary"
+                    >
+                      View Syllabus
+                    </a>
+                  )}
+                </>
+              )
+            }))} />
+          )}
+        </section>
+
+        {/* Resources Section */}
+        <section className="portal-section">
+          <div className="section-header">
+            <h2>📖 Learning Resources</h2>
+            <p className="section-subtitle">
+              {resources.length} {resources.length === 1 ? 'resource' : 'resources'} available
+            </p>
           </div>
 
-          <div className="info-card">
-            <h3>📊 Quick Links</h3>
-            <div className="info-details">
-              <a href={`${API_BASE_URL}/admin/`} target="_blank" className="portal-link">
-                Admin Dashboard →
-              </a>
-              <a href={`${API_BASE_URL}/api/health/`} target="_blank" className="portal-link">
-                API Health Check →
-              </a>
+          {resources.length === 0 ? (
+            <div className="empty-state">
+              <p>No resources available at the moment.</p>
+              <p className="text-muted">Check back later for tutorials, documentation, and learning materials!</p>
             </div>
-          </div>
-
-          <div className="info-card">
-            <h3>ℹ️ Information</h3>
-            <div className="info-details">
-              <p>This is a secure member-only area of the TARS Club website.</p>
-              <p>You can access club resources and manage your membership from here.</p>
-            </div>
-          </div>
-        </div>
+          ) : (
+            <FocusCards cards={resources.map((resource) => ({
+              title: resource.title,
+              src: resolveMediaUrl(resource.thumbnail) || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800',
+              description: resource.description,
+              badges: (
+                <>
+                  <span className="badge badge-category">{resource.category_display}</span>
+                  {resource.is_featured && (
+                    <span className="badge badge-featured">⭐ Featured</span>
+                  )}
+                </>
+              ),
+              meta: resource.author ? (
+                <div className="meta-item">
+                  <span className="meta-icon">✍️</span>
+                  <span>{resource.author}</span>
+                </div>
+              ) : undefined,
+              tags: resource.tag_list,
+              actions: (
+                <>
+                  {resource.external_link && (
+                    <button
+                      onClick={() => handleDownload(resource.id, resource.external_link || '')}
+                      className="btn btn-primary"
+                    >
+                      Visit Resource
+                    </button>
+                  )}
+                  {resource.file && (
+                    <button
+                      onClick={() => handleDownload(resource.id, resolveMediaUrl(resource.file) || '')}
+                      className="btn btn-secondary"
+                    >
+                      Download
+                    </button>
+                  )}
+                </>
+              )
+            }))} />
+          )}
+        </section>
       </main>
     </div>
   );

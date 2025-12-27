@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { ShootingStars } from './ui/shooting-stars';
+import { StarsBackground } from './ui/stars-background';
 import './Login.css';
 
 function Login() {
@@ -28,6 +30,8 @@ function Login() {
 
   return (
     <div className="login-container">
+      <ShootingStars />
+      <StarsBackground />
       <div className="login-box">
         <div className="login-header">
           <h1>TARS Club</h1>
