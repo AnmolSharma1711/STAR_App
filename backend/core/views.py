@@ -45,6 +45,6 @@ def home_page_data(request):
     return Response({
         'site_settings': SiteSettingsSerializer(site_settings, context={'request': request}).data if site_settings else None,
         'sponsors': SponsorSerializer(sponsors, many=True, context={'request': request}).data,
-        'social_links': SocialLinkSerializer(social_links, context={'request': request}).data,
+        'social_links': SocialLinkSerializer(social_links, many=True).data,
     })
 
