@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import SiteSettings, Sponsor, SocialLink, Class, Resource
+from .models import SiteSettings, Sponsor, SocialLink, Class, Resource, TeamMember, Domain, Member
 
 
 class SiteSettingsSerializer(serializers.ModelSerializer):
@@ -28,6 +28,71 @@ class SocialLinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = SocialLink
         fields = ['id', 'platform', 'platform_display', 'url', 'icon_class', 'is_active', 'order']
+
+
+class TeamMemberSerializer(serializers.ModelSerializer):
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+
+    class Meta:
+        model = TeamMember
+        fields = [
+            'id',
+            'name',
+            'role',
+            'role_display',
+            'position',
+            'email',
+            'quote',
+            'tech_stack',
+            'image',
+            'linkedin_url',
+            'github_url',
+            'twitter_url',
+            'instagram_url',
+            'website_url',
+            'order',
+            'is_active',
+        ]
+
+
+class TeamMemberRefSerializer(serializers.ModelSerializer):
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+
+    class Meta:
+        model = TeamMember
+        fields = ['id', 'name', 'role', 'role_display', 'position']
+
+
+class DomainSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Domain
+        fields = ['id', 'name', 'display_name', 'description', 'logo', 'is_active']
+
+
+class MemberSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    domain = DomainSerializer(read_only=True)
+    lead = TeamMemberRefSerializer(read_only=True)
+
+    class Meta:
+        model = Member
+        fields = [
+            'id',
+            'user_id',
+            'username',
+            'domain',
+            'lead',
+            'phone_number',
+            'personal_mail',
+            'gla_mail',
+            'university_roll',
+            'linkedin_url',
+            'github_url',
+            'is_active',
+            'created_at',
+            'updated_at',
+        ]
 
 
 class ClassSerializer(serializers.ModelSerializer):

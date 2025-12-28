@@ -2,10 +2,11 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .models import SiteSettings, Sponsor, SocialLink, Class, Resource
+from .models import SiteSettings, Sponsor, SocialLink, Class, Resource, TeamMember, Domain, Member
 from .serializers import (
     SiteSettingsSerializer, SponsorSerializer, SocialLinkSerializer,
-    ClassSerializer, ResourceSerializer
+    ClassSerializer, ResourceSerializer, TeamMemberSerializer,
+    DomainSerializer, MemberSerializer
 )
 
 
@@ -44,6 +45,32 @@ class ResourceViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
 
 
+class TeamMemberViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only view for mentors/leads"""
+    queryset = TeamMember.objects.filter(is_active=True)
+    serializer_class = TeamMemberSerializer
+    permission_classes = [AllowAny]
+
+
+class DomainViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only view for member domains"""
+    queryset = Domain.objects.filter(is_active=True)
+    serializer_class = DomainSerializer
+    permission_classes = [AllowAny]
+
+
+class MemberViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only view for members (PII)"""
+    queryset = Member.objects.filter(is_active=True)
+    serializer_class = MemberSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if getattr(self.request.user, 'is_staff', False):
+            return Member.objects.filter(is_active=True).select_related('user', 'domain', 'lead')
+        return Member.objects.filter(is_active=True, user=self.request.user).select_related('user', 'domain', 'lead')
+
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def home_page_data(request):
@@ -55,6 +82,10 @@ def home_page_data(request):
     
     # Get active sponsors
     sponsors = Sponsor.objects.filter(is_active=True)
+
+    # Get active mentors/leads
+    mentors = TeamMember.objects.filter(is_active=True, role='mentor')
+    leads = TeamMember.objects.filter(is_active=True, role='lead')
     
     # Get active social links
     social_links = SocialLink.objects.filter(is_active=True)
@@ -62,6 +93,8 @@ def home_page_data(request):
     return Response({
         'site_settings': SiteSettingsSerializer(site_settings).data if site_settings else None,
         'sponsors': SponsorSerializer(sponsors, many=True).data,
+        'mentors': TeamMemberSerializer(mentors, many=True).data,
+        'leads': TeamMemberSerializer(leads, many=True).data,
         'social_links': SocialLinkSerializer(social_links, many=True).data,
     })
 

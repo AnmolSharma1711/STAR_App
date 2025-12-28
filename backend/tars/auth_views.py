@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -47,6 +47,8 @@ def register(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    User = get_user_model()
+
     if User.objects.filter(username=username).exists():
         return Response(
             {'error': 'Username already exists'},

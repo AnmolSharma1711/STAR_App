@@ -191,6 +191,207 @@
   overflow: hidden;
 }
 
+/* Mentors & Leads Section */
+.team-section {
+  padding: 5rem 2rem;
+  background: #f8f9fa;
+  overflow: hidden;
+}
+
+.team-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.team-row {
+  margin-top: 2.5rem;
+}
+
+.team-row-title {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0 0 1rem;
+  text-align: left;
+}
+
+.team-scroll-wrapper {
+  overflow: hidden;
+  position: relative;
+  margin: 1rem 0;
+}
+
+.team-scroll-wrapper::before,
+.team-scroll-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.team-scroll-wrapper::before {
+  left: 0;
+  background: linear-gradient(to right, #f8f9fa, transparent);
+}
+
+.team-scroll-wrapper::after {
+  right: 0;
+  background: linear-gradient(to left, #f8f9fa, transparent);
+}
+
+.team-scroll {
+  display: flex;
+  gap: 2rem;
+  width: fit-content;
+}
+
+/* Only animate if there are multiple cards */
+.team-scroll-wrapper:not(:has(.team-card:only-child)) .team-scroll {
+  animation: scroll 60s linear infinite;
+}
+
+.team-scroll:hover {
+  animation-play-state: paused;
+}
+
+.team-card {
+  flex: 0 0 320px;
+  height: 360px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  perspective: 1200px;
+}
+
+.team-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.team-card.is-flipped .team-card-inner {
+  transform: rotateY(180deg);
+}
+
+.team-card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  background: white;
+  border-radius: 15px;
+  padding: 1.75rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.team-card:hover .team-card-face {
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.team-card-back {
+  transform: rotateY(180deg);
+}
+
+.team-avatar-wrapper {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  background: #f8f9fa;
+  border-radius: 50%;
+  padding: 1rem;
+}
+
+.team-avatar {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.team-avatar-placeholder {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.team-front-info {
+  width: 100%;
+}
+
+.team-name {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.team-position {
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.team-back-top {
+  margin-bottom: 1rem;
+}
+
+.team-quote {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #444;
+  margin: 0.75rem 0 1rem;
+}
+
+.team-tech {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.75rem;
+}
+
+.team-tech-label {
+  font-weight: 700;
+  color: #667eea;
+}
+
+.team-email {
+  display: inline-block;
+  margin-top: 0.25rem;
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.team-email:hover {
+  color: #764ba2;
+}
+
+.team-socials {
+  margin-top: auto;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  font-size: 1.35rem;
+}
+
+.team-socials a {
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.team-socials a:hover {
+  transform: scale(1.15);
+}
+
 .sponsors-container {
   max-width: 1400px;
   margin: 0 auto;
@@ -349,6 +550,54 @@
   padding: 3rem 2rem 2rem;
 }
 
+.footer-sponsors {
+  max-width: 1200px;
+  margin: 2.5rem auto 0;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.footer-sponsors-title {
+  font-size: 1.1rem;
+  margin: 0 0 1.25rem;
+}
+
+.footer-sponsor-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer-sponsor-logo-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.footer-sponsor-logo-link:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.footer-sponsor-logo-link.is-disabled {
+  cursor: default;
+  opacity: 0.8;
+}
+
+.footer-sponsor-logo {
+  height: 36px;
+  max-width: 140px;
+  object-fit: contain;
+}
+
 .footer-content {
   max-width: 1200px;
   margin: 0 auto;
@@ -437,6 +686,11 @@
   
   .sponsor-card {
     flex: 0 0 280px;
+  }
+
+  .team-card {
+    flex: 0 0 280px;
+    height: 340px;
   }
   
   .footer-content {

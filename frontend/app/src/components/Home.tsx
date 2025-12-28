@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import { ShootingStars } from './ui/shooting-stars'
@@ -43,9 +43,29 @@ interface SocialLink {
   order: number
 }
 
+interface TeamMember {
+  id: number
+  name: string
+  role: 'mentor' | 'lead'
+  role_display: string
+  position: string
+  email?: string | null
+  quote?: string | null
+  tech_stack?: string | null
+  image?: string | null
+  linkedin_url?: string | null
+  github_url?: string | null
+  twitter_url?: string | null
+  instagram_url?: string | null
+  website_url?: string | null
+  order: number
+}
+
 interface HomePageData {
   site_settings: SiteSettings | null
   sponsors: Sponsor[]
+  mentors: TeamMember[]
+  leads: TeamMember[]
   social_links: SocialLink[]
 }
 
@@ -53,6 +73,7 @@ const Home = () => {
   const navigate = useNavigate()
   const [homeData, setHomeData] = useState<HomePageData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     fetchHomeData()
@@ -79,6 +100,121 @@ const Home = () => {
   }
 
   const settings = homeData?.site_settings
+
+  const toggleCard = (key: string) => {
+    setFlippedCards((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const stopPropagation = (e: MouseEvent<HTMLElement>) => {
+    e.stopPropagation()
+  }
+
+  const renderTeamRow = (title: string, members: TeamMember[]) => {
+    if (!members || members.length === 0) return null
+    const rowItems = (members.length < 5
+      ? [...members, ...members, ...members]
+      : members
+    )
+
+    return (
+      <div className="team-row">
+        <h3 className="team-row-title">{title}</h3>
+        <div className="team-scroll-wrapper">
+          <div className="team-scroll">
+            {rowItems.map((member, index) => {
+              const key = `${member.id}-${index}`
+              const isFlipped = !!flippedCards[key]
+
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  className={`team-card ${isFlipped ? 'is-flipped' : ''}`}
+                  onClick={() => toggleCard(key)}
+                  aria-pressed={isFlipped}
+                >
+                  <div className="team-card-inner">
+                    <div className="team-card-face team-card-front">
+                      <div className="team-avatar-wrapper">
+                        {member.image ? (
+                          <img
+                            src={resolveMediaUrl(member.image)}
+                            alt={member.name}
+                            className="team-avatar"
+                          />
+                        ) : (
+                          <div className="team-avatar-placeholder">{member.name?.[0] || '?'}</div>
+                        )}
+                      </div>
+                      <div className="team-front-info">
+                        <div className="team-name">{member.name}</div>
+                        <div className="team-position">{member.position}</div>
+                      </div>
+                    </div>
+
+                    <div className="team-card-face team-card-back">
+                      <div className="team-back-top">
+                        <div className="team-name">{member.name}</div>
+                        <div className="team-position">{member.position}</div>
+                      </div>
+
+                      {member.quote && (
+                        <div className="team-quote">“{member.quote}”</div>
+                      )}
+
+                      {member.tech_stack && (
+                        <div className="team-tech">
+                          <span className="team-tech-label">Tech:</span> {member.tech_stack}
+                        </div>
+                      )}
+
+                      {member.email && (
+                        <a
+                          className="team-email"
+                          href={`mailto:${member.email}`}
+                          onClick={stopPropagation}
+                        >
+                          {member.email}
+                        </a>
+                      )}
+
+                      <div className="team-socials">
+                        {member.linkedin_url && (
+                          <a href={member.linkedin_url} target="_blank" rel="noopener noreferrer" onClick={stopPropagation}>
+                            💼
+                          </a>
+                        )}
+                        {member.github_url && (
+                          <a href={member.github_url} target="_blank" rel="noopener noreferrer" onClick={stopPropagation}>
+                            💻
+                          </a>
+                        )}
+                        {member.twitter_url && (
+                          <a href={member.twitter_url} target="_blank" rel="noopener noreferrer" onClick={stopPropagation}>
+                            🐦
+                          </a>
+                        )}
+                        {member.instagram_url && (
+                          <a href={member.instagram_url} target="_blank" rel="noopener noreferrer" onClick={stopPropagation}>
+                            📷
+                          </a>
+                        )}
+                        {member.website_url && (
+                          <a href={member.website_url} target="_blank" rel="noopener noreferrer" onClick={stopPropagation}>
+                            🌐
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="home-container">
@@ -133,64 +269,25 @@ const Home = () => {
             </button>
             <button 
               className="btn btn-secondary"
-              onClick={() => window.scrollTo({ top: document.querySelector('.sponsors-section')?.getBoundingClientRect().top, behavior: 'smooth' })}
+              onClick={() => document.querySelector('.team-section')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              Our Partners
+              Mentors & Leads
             </button>
           </div>
         </div>
       </section>
 
-      {/* Sponsors Section */}
-      {homeData?.sponsors && homeData.sponsors.length > 0 && (
-        <section className="sponsors-section">
-          <div className="sponsors-container">
-            <h2 className="section-title">Our Partners & Sponsors</h2>
-            <p className="section-subtitle">Collaborating with industry leaders</p>
-            
-            <div className="sponsors-scroll-wrapper">
-              <div className="sponsors-scroll">
-                {/* Duplicate sponsors only if we have less than 5 for infinite scroll effect */}
-                {(homeData.sponsors.length < 5 
-                  ? [...homeData.sponsors, ...homeData.sponsors, ...homeData.sponsors]
-                  : homeData.sponsors
-                ).map((sponsor, index) => (
-                  <div key={`${sponsor.id}-${index}`} className="sponsor-card">
-                    <div className="sponsor-logo-wrapper">
-                      {sponsor.logo ? (
-                          <img 
-                            src={resolveMediaUrl(sponsor.logo)}
-                            alt={sponsor.name}
-                            className="sponsor-logo"
-                          />
-                      ) : (
-                        <div className="sponsor-placeholder">{sponsor.name[0]}</div>
-                      )}
-                    </div>
-                    <div className="sponsor-info">
-                      <h3 className="sponsor-name">{sponsor.name}</h3>
-                      <p className="sponsor-agenda">{sponsor.collaboration_agenda}</p>
-                      <p className="sponsor-date">
-                        <span className="date-label">Since:</span> {sponsor.collaboration_date_formatted}
-                      </p>
-                      {sponsor.website && (
-                        <a 
-                          href={sponsor.website} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="sponsor-link"
-                        >
-                          Visit Website →
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+      {/* Mentors & Leads Section */}
+      {(homeData?.mentors?.length || homeData?.leads?.length) ? (
+        <section className="team-section">
+          <div className="team-container">
+            <h2 className="section-title">Mentors & Leads</h2>
+            <p className="section-subtitle">Meet the people guiding the club</p>
+            {renderTeamRow('Mentors', homeData?.mentors || [])}
+            {renderTeamRow('Leads', homeData?.leads || [])}
           </div>
         </section>
-      )}
+      ) : null}
 
       {/* Footer */}
       <footer className="home-footer">
@@ -235,13 +332,38 @@ const Home = () => {
               </div>
             </div>
           )}
-          
-          <div className="footer-section">
-            <p className="footer-copyright">
-              © {new Date().getFullYear()} {settings?.club_name || 'TARS'}. All rights reserved.
-            </p>
-          </div>
         </div>
+
+        {homeData?.sponsors && homeData.sponsors.length > 0 && (
+          <div className="footer-sponsors">
+            <h4 className="footer-sponsors-title">Sponsors</h4>
+            <div className="footer-sponsor-logos">
+              {homeData.sponsors.map((sponsor) => (
+                <a
+                  key={sponsor.id}
+                  href={sponsor.website || '#'}
+                  target={sponsor.website ? '_blank' : undefined}
+                  rel={sponsor.website ? 'noopener noreferrer' : undefined}
+                  className={`footer-sponsor-logo-link ${sponsor.website ? '' : 'is-disabled'}`}
+                  aria-label={sponsor.website ? `${sponsor.name} website` : sponsor.name}
+                  onClick={(e) => {
+                    if (!sponsor.website) e.preventDefault()
+                  }}
+                >
+                  <img
+                    src={resolveMediaUrl(sponsor.logo)}
+                    alt={sponsor.name}
+                    className="footer-sponsor-logo"
+                  />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p className="footer-copyright">
+          © {new Date().getFullYear()} {settings?.club_name || 'TARS'}. All rights reserved.
+        </p>
       </footer>
     </div>
   )

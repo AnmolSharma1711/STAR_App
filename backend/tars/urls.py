@@ -25,7 +25,7 @@ from . import auth_views
 from rest_framework_simplejwt.views import TokenRefreshView
 from core.views import (
     SiteSettingsViewSet, SponsorViewSet, SocialLinkViewSet,
-    ClassViewSet, ResourceViewSet, home_page_data, member_portal_data,
+    ClassViewSet, ResourceViewSet, TeamMemberViewSet, DomainViewSet, MemberViewSet, home_page_data, member_portal_data,
     increment_download
 )
 
@@ -34,6 +34,9 @@ router = DefaultRouter()
 router.register(r'site-settings', SiteSettingsViewSet)
 router.register(r'sponsors', SponsorViewSet)
 router.register(r'social-links', SocialLinkViewSet)
+router.register(r'team-members', TeamMemberViewSet)
+router.register(r'domains', DomainViewSet)
+router.register(r'members', MemberViewSet)
 router.register(r'classes', ClassViewSet)
 router.register(r'resources', ResourceViewSet)
 

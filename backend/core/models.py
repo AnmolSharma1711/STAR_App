@@ -1,5 +1,6 @@
 from django.db import models
-from django.core.validators import URLValidator
+from django.conf import settings
+from django.core.validators import URLValidator, RegexValidator
 
 
 class SiteSettings(models.Model):
@@ -89,6 +90,124 @@ class SocialLink(models.Model):
 
     def __str__(self):
         return f"{self.get_platform_display()} - {self.url}"
+
+
+class TeamMember(models.Model):
+    """Mentors and Leads displayed on the home page."""
+
+    ROLE_CHOICES = [
+        ('mentor', 'Mentor'),
+        ('lead', 'Lead'),
+    ]
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='team_member_profile',
+        help_text="Optional: link this team member to a user account",
+    )
+    name = models.CharField(max_length=200)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    position = models.CharField(max_length=200, help_text="Position in club (e.g., Tech Lead)")
+    email = models.EmailField(blank=True, null=True)
+    quote = models.TextField(blank=True, null=True)
+    tech_stack = models.TextField(blank=True, null=True, help_text="Comma-separated or short summary")
+
+    image = models.ImageField(upload_to='team/', blank=True, null=True)
+
+    linkedin_url = models.URLField(blank=True, null=True, validators=[URLValidator()])
+    github_url = models.URLField(blank=True, null=True, validators=[URLValidator()])
+    twitter_url = models.URLField(blank=True, null=True, validators=[URLValidator()])
+    instagram_url = models.URLField(blank=True, null=True, validators=[URLValidator()])
+    website_url = models.URLField(blank=True, null=True, validators=[URLValidator()])
+
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0, help_text="Display order (lower numbers appear first)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['role', 'order', 'name']
+        verbose_name = "Team Member"
+        verbose_name_plural = "Team Members"
+
+    def __str__(self):
+        return f"{self.get_role_display()} - {self.name}"
+
+
+class Domain(models.Model):
+    """Domains for club members (e.g., Web, App, AI/ML)."""
+
+    name = models.CharField(max_length=120, unique=True)
+    display_name = models.CharField(max_length=120)
+    description = models.TextField(blank=True, null=True)
+    logo = models.ImageField(upload_to='domain/', blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['display_name', 'name']
+        verbose_name = "Domain"
+        verbose_name_plural = "Domains"
+
+    def __str__(self):
+        return self.name
+
+
+class Member(models.Model):
+    """Normal club members (linked to a user account)."""
+
+    phone_regex = RegexValidator(
+        regex=r'^\+?[0-9]{7,15}$',
+        message="Phone number must be 7-15 digits and may start with +",
+    )
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='member_profile',
+    )
+
+    lead = models.ForeignKey(
+        TeamMember,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='members',
+        limit_choices_to={'role': 'lead'},
+        help_text="Assigned lead (must be a TeamMember with role=Lead)",
+    )
+
+    domain = models.ForeignKey(
+        Domain,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='members',
+    )
+
+    phone_number = models.CharField(max_length=20, blank=True, null=True, validators=[phone_regex])
+    personal_mail = models.EmailField(blank=True, null=True)
+    gla_mail = models.EmailField(blank=True, null=True)
+    university_roll = models.CharField(max_length=100, blank=True, null=True, unique=True)
+
+    linkedin_url = models.URLField(blank=True, null=True, validators=[URLValidator()])
+    github_url = models.URLField(blank=True, null=True, validators=[URLValidator()])
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Member"
+        verbose_name_plural = "Members"
+
+    def __str__(self):
+        return f"Member - {self.user.username}"
 
 
 class Class(models.Model):
