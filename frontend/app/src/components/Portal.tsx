@@ -98,6 +98,15 @@ function Portal() {
     }
   };
 
+  const getModeBadgeClass = (mode: string) => {
+    switch (mode) {
+      case 'online': return 'badge-online';
+      case 'offline': return 'badge-offline';
+      case 'hybrid': return 'badge-hybrid';
+      default: return 'badge-default';
+    }
+  };
+
   const handleDownload = async (resourceId: number, downloadUrl: string) => {
     try {
       console.log('Download clicked for resource:', resourceId);
@@ -192,6 +201,9 @@ function Portal() {
                   <span className={`badge ${getDifficultyBadgeClass(classItem.difficulty)}`}>
                     {classItem.difficulty_display}
                   </span>
+                  <span className={`badge ${getModeBadgeClass(classItem.mode)}`}>
+                    {classItem.mode_display}
+                  </span>
                 </>
               ),
               meta: (
@@ -208,6 +220,12 @@ function Portal() {
                     <span className="meta-icon">⏱️</span>
                     <span>{classItem.duration}</span>
                   </div>
+                  {(classItem.mode === 'offline' || classItem.mode === 'hybrid') && classItem.location && (
+                    <div className="meta-item">
+                      <span className="meta-icon">📍</span>
+                      <span>{classItem.location}</span>
+                    </div>
+                  )}
                 </>
               ),
               actions: (

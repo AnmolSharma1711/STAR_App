@@ -33,6 +33,8 @@ class SocialLinkSerializer(serializers.ModelSerializer):
 class ClassSerializer(serializers.ModelSerializer):
     difficulty_display = serializers.CharField(source='get_difficulty_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    mode = serializers.ReadOnlyField()
+    mode_display = serializers.ReadOnlyField()
     is_full = serializers.ReadOnlyField()
     start_date_formatted = serializers.SerializerMethodField()
     
@@ -40,7 +42,7 @@ class ClassSerializer(serializers.ModelSerializer):
         model = Class
         fields = [
             'id', 'title', 'description', 'instructor', 'difficulty', 'difficulty_display',
-            'status', 'status_display', 'thumbnail', 'start_date', 'start_date_formatted',
+            'status', 'status_display', 'mode', 'mode_display', 'thumbnail', 'start_date', 'start_date_formatted',
             'end_date', 'duration', 'max_participants', 'enrolled_count', 'is_full',
             'meeting_link', 'location', 'syllabus', 'is_active', 'order',
             'created_at', 'updated_at'
