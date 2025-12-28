@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
+import { ShootingStars } from './ui/shooting-stars'
+import { StarsBackground } from './ui/stars-background'
 import './Home.css'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -80,7 +82,9 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      {/* University Logo - Top Right */}
+      <ShootingStars />
+      <StarsBackground />
+      
       {settings?.university_logo && (
         <div className="university-logo-wrapper">
           <img 

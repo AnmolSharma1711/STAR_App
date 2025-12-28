@@ -1,9 +1,12 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from .models import SiteSettings, Sponsor, SocialLink
-from .serializers import SiteSettingsSerializer, SponsorSerializer, SocialLinkSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from .models import SiteSettings, Sponsor, SocialLink, Class, Resource
+from .serializers import (
+    SiteSettingsSerializer, SponsorSerializer, SocialLinkSerializer,
+    ClassSerializer, ResourceSerializer
+)
 
 
 class SiteSettingsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -27,6 +30,20 @@ class SocialLinkViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
 
 
+class ClassViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only view for classes - requires authentication"""
+    queryset = Class.objects.filter(is_active=True)
+    serializer_class = ClassSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class ResourceViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only view for resources - requires authentication"""
+    queryset = Resource.objects.filter(is_active=True)
+    serializer_class = ResourceSerializer
+    permission_classes = [IsAuthenticated]
+
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def home_page_data(request):
@@ -47,4 +64,43 @@ def home_page_data(request):
         'sponsors': SponsorSerializer(sponsors, many=True).data,
         'social_links': SocialLinkSerializer(social_links, many=True).data,
     })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def member_portal_data(request):
+    """
+    Single endpoint to get all member portal data
+    """
+    # Get active classes
+    classes = Class.objects.filter(is_active=True)
+    
+    # Get active resources
+    resources = Resource.objects.filter(is_active=True)
+    
+    return Response({
+        'classes': ClassSerializer(classes, many=True).data,
+        'resources': ResourceSerializer(resources, many=True).data,
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def increment_download(request, resource_id):
+    """
+    Increment download count for a resource
+    """
+    try:
+        resource = Resource.objects.get(id=resource_id, is_active=True)
+        resource.download_count += 1
+        resource.save(update_fields=['download_count'])
+        return Response({
+            'success': True,
+            'download_count': resource.download_count
+        })
+    except Resource.DoesNotExist:
+        return Response({
+            'success': False,
+            'error': 'Resource not found'
+        }, status=status.HTTP_404_NOT_FOUND)
 

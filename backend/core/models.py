@@ -90,3 +90,94 @@ class SocialLink(models.Model):
     def __str__(self):
         return f"{self.get_platform_display()} - {self.url}"
 
+
+class Class(models.Model):
+    """Classes/Workshops offered by the club"""
+    DIFFICULTY_CHOICES = [
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('upcoming', 'Upcoming'),
+        ('ongoing', 'Ongoing'),
+        ('completed', 'Completed'),
+        ('archived', 'Archived'),
+    ]
+    
+    title = models.CharField(max_length=300)
+    description = models.TextField()
+    instructor = models.CharField(max_length=200)
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='beginner')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='upcoming')
+    thumbnail = models.ImageField(upload_to='classes/', blank=True, null=True)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField(blank=True, null=True)
+    duration = models.CharField(max_length=100, help_text="e.g., '4 weeks' or '10 hours'")
+    max_participants = models.IntegerField(default=30)
+    enrolled_count = models.IntegerField(default=0)
+    meeting_link = models.URLField(blank=True, null=True, help_text="Zoom/Meet link for online classes")
+    location = models.CharField(max_length=300, blank=True, null=True, help_text="Physical location if applicable")
+    syllabus = models.FileField(upload_to='class_syllabus/', blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['order', '-start_date']
+        verbose_name = "Class"
+        verbose_name_plural = "Classes"
+    
+    def __str__(self):
+        return f"{self.title} - {self.get_status_display()}"
+    
+    @property
+    def is_full(self):
+        return self.enrolled_count >= self.max_participants
+
+
+class Resource(models.Model):
+    """Learning resources and materials"""
+    CATEGORY_CHOICES = [
+        ('tutorial', 'Tutorial'),
+        ('documentation', 'Documentation'),
+        ('video', 'Video'),
+        ('article', 'Article'),
+        ('book', 'Book'),
+        ('tool', 'Tool'),
+        ('project', 'Project'),
+        ('other', 'Other'),
+    ]
+    
+    title = models.CharField(max_length=300)
+    description = models.TextField()
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    thumbnail = models.ImageField(upload_to='resources/', blank=True, null=True)
+    file = models.FileField(upload_to='resource_files/', blank=True, null=True, help_text="Upload file if applicable")
+    external_link = models.URLField(blank=True, null=True, help_text="External URL if applicable")
+    author = models.CharField(max_length=200, blank=True, null=True)
+    tags = models.CharField(max_length=500, blank=True, null=True, help_text="Comma-separated tags")
+    is_featured = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    view_count = models.IntegerField(default=0)
+    download_count = models.IntegerField(default=0)
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['order', '-created_at']
+        verbose_name = "Resource"
+        verbose_name_plural = "Resources"
+    
+    def __str__(self):
+        return f"{self.title} - {self.get_category_display()}"
+    
+    @property
+    def tag_list(self):
+        """Return tags as a list"""
+        if self.tags:
+            return [tag.strip() for tag in self.tags.split(',')]
+        return []

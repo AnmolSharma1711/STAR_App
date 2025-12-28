@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SiteSettings, Sponsor, SocialLink
+from .models import SiteSettings, Sponsor, SocialLink, Class, Resource
 
 
 @admin.register(SiteSettings)
@@ -62,3 +62,62 @@ class SocialLinkAdmin(admin.ModelAdmin):
         }),
     )
 
+
+@admin.register(Class)
+class ClassAdmin(admin.ModelAdmin):
+    list_display = ['title', 'instructor', 'difficulty', 'status', 'start_date', 'enrolled_count', 'max_participants', 'is_active']
+    list_filter = ['difficulty', 'status', 'is_active', 'start_date']
+    search_fields = ['title', 'instructor', 'description']
+    list_editable = ['is_active', 'status']
+    ordering = ['order', '-start_date']
+    date_hierarchy = 'start_date'
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'description', 'instructor', 'thumbnail')
+        }),
+        ('Class Details', {
+            'fields': ('difficulty', 'status', 'duration', 'start_date', 'end_date')
+        }),
+        ('Enrollment', {
+            'fields': ('max_participants', 'enrolled_count')
+        }),
+        ('Location & Links', {
+            'fields': ('location', 'meeting_link', 'syllabus')
+        }),
+        ('Display Settings', {
+            'fields': ('is_active', 'order')
+        }),
+    )
+    
+    readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(Resource)
+class ResourceAdmin(admin.ModelAdmin):
+    list_display = ['title', 'category', 'author', 'is_featured', 'download_count', 'is_active']
+    list_filter = ['category', 'is_featured', 'is_active', 'created_at']
+    search_fields = ['title', 'description', 'author', 'tags']
+    list_editable = ['is_featured', 'is_active']
+    ordering = ['order', '-created_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'description', 'category', 'author', 'thumbnail')
+        }),
+        ('Content', {
+            'fields': ('file', 'external_link')
+        }),
+        ('Metadata', {
+            'fields': ('tags', 'is_featured')
+        }),
+        ('Statistics', {
+            'fields': ('download_count',),
+            'description': 'Download count updates automatically when users download resources.'
+        }),
+        ('Display Settings', {
+            'fields': ('is_active', 'order')
+        }),
+    )
+    
+    readonly_fields = ['created_at', 'updated_at', 'download_count']

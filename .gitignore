@@ -26,3 +26,5 @@ coverage/
 
 # Docker volumes
 docker-data/
+
+.venv/
