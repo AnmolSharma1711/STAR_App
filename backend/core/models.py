@@ -136,6 +136,31 @@ class Class(models.Model):
     @property
     def is_full(self):
         return self.enrolled_count >= self.max_participants
+    
+    @property
+    def mode(self):
+        """Determine class mode based on meeting_link and location"""
+        has_online = bool(self.meeting_link)
+        has_offline = bool(self.location)
+        
+        if has_online and has_offline:
+            return 'hybrid'
+        elif has_online:
+            return 'online'
+        elif has_offline:
+            return 'offline'
+        else:
+            return 'online'  # default
+    
+    @property
+    def mode_display(self):
+        """Get display name for mode"""
+        mode_map = {
+            'online': 'Online',
+            'offline': 'Offline',
+            'hybrid': 'Offline + Online'
+        }
+        return mode_map.get(self.mode, 'Online')
 
 
 class Resource(models.Model):

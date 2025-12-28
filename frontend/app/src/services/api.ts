@@ -26,6 +26,8 @@ export interface ClassData {
   difficulty_display: string;
   status: string;
   status_display: string;
+  mode: string;
+  mode_display: string;
   thumbnail?: string;
   start_date: string;
   start_date_formatted: string;
