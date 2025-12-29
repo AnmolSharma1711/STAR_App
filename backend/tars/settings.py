@@ -118,20 +118,55 @@ WSGI_APPLICATION = "tars.wsgi.application"
 # Add these at the top of your settings.py
 
 
-# Replace the DATABASES section of your settings.py with this
-tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+def _normalize_database_url(value: str | None) -> str | None:
+    if not value:
+        return None
+    value = value.strip()
+    # Guard against accidentally including quotes in env values
+    if (value.startswith("'") and value.endswith("'")) or (value.startswith('"') and value.endswith('"')):
+        value = value[1:-1].strip()
+    return value or None
 
-DATABASES = {
-    'default': {
+
+def _database_config_from_url(db_url: str) -> dict:
+    parsed = urlparse(db_url)
+    options = dict(parse_qsl(parsed.query))
+
+    # Neon requires SSL. If not explicitly set in DATABASE_URL, default it.
+    host = parsed.hostname or ''
+    if host.endswith('neon.tech') and 'sslmode' not in options:
+        options['sslmode'] = os.getenv('PGSSLMODE', 'require')
+
+    # Respect port in DATABASE_URL (important for managed DBs/poolers).
+    port = parsed.port or int(os.getenv('DB_PORT', '5432'))
+
+    return {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': tmpPostgres.path.replace('/', ''),
-        'USER': tmpPostgres.username,
-        'PASSWORD': tmpPostgres.password,
-        'HOST': tmpPostgres.hostname,
-        'PORT': 5432,
-        'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+        'NAME': (parsed.path or '').lstrip('/'),
+        'USER': parsed.username,
+        'PASSWORD': parsed.password,
+        'HOST': parsed.hostname,
+        'PORT': port,
+        'OPTIONS': options,
     }
-}
+
+
+_db_url = _normalize_database_url(os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None))
+
+if _db_url:
+    DATABASES = {'default': _database_config_from_url(_db_url)}
+else:
+    # Fallback for local/dev if DATABASE_URL isn't provided
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='tars_db'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default='postgres'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
 
 
 # Password validation
@@ -195,7 +230,7 @@ CORS_ALLOWED_ORIGINS = config(
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
 # REST Framework Settings
