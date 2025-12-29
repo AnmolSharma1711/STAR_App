@@ -179,9 +179,6 @@ export const authService = {
   // Get user profile
   async getProfile(): Promise<User> {
     const token = await this.getAccessToken();
-  // Get user profile
-  async getProfile(): Promise<User> {
-    const token = await this.getAccessToken();
     const response = await fetch(`${API_BASE_URL}/api/auth/profile/`, {
       mode: 'cors',
       credentials: 'include',
