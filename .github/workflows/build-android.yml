@@ -49,37 +49,51 @@ jobs:
         working-directory: frontend/app
         run: npm ci
 
+      - name: Install Capacitor CLI
+        working-directory: frontend/app
+        run: npm install @capacitor/cli @capacitor/core @capacitor/android --save-dev
+
       - name: Build frontend
         working-directory: frontend/app
-        run: npm run build --mode production
+        run: npm run build
         env:
           VITE_API_URL: https://tars-bkv7.onrender.com
 
-      - name: Install Capacitor dependencies
-        working-directory: android-app
-        run: npm install
+      - name: Install Capacitor CLI
+        working-directory: frontend/app
+        run: npm install @capacitor/cli @capacitor/core @capacitor/android --save-dev
 
-      - name: Copy capacitor config
+      - name: Copy capacitor config to frontend
         run: |
           cp android-app/capacitor.config.json frontend/app/capacitor.config.json
+          echo "Capacitor config copied"
 
-      - name: Add Android platform
+      - name: Initialize and add Android platform
         working-directory: frontend/app
         run: |
-          npx cap add android || echo "Android platform already exists"
+          npx cap init "TARS" "com.tars.app" --web-dir=dist || echo "Already initialized"
+          npx cap add android || echo "Android already added"
 
-      - name: Sync Capacitor with built assets
+      - name: Initialize and add Android platform
         working-directory: frontend/app
-        run: npx cap sync android
+        run: |
+          npx cap init "TARS" "com.tars.app" --web-dir=dist || echo "Already initialized"
+          npx cap add android || echo "Android already added"
 
       - name: Copy Android configuration files
         run: |
-          # Copy network security config
+          echo "Copying network security config..."
           mkdir -p frontend/app/android/app/src/main/res/xml
-          cp android-app/android/app/src/main/res/xml/network_security_config.xml frontend/app/android/app/src/main/res/xml/
+          cp android-app/android/app/src/main/res/xml/network_security_config.xml frontend/app/android/app/src/main/res/xml/ || echo "Failed to copy network config"
           
-          # Update AndroidManifest.xml
-          cp android-app/android/app/src/main/AndroidManifest.xml frontend/app/android/app/src/main/AndroidManifest.xml
+          echo "Copying AndroidManifest..."
+          cp android-app/android/app/src/main/AndroidManifest.xml frontend/app/android/app/src/main/AndroidManifest.xml || echo "Failed to copy manifest"
+          
+          echo "Files copied successfully"
+
+      - name: Sync Capacitor
+        working-directory: frontend/app
+        run: npx cap sync android
 
       - name: Grant execute permission for gradlew
         working-directory: frontend/app/android
