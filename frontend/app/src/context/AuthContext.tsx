@@ -32,6 +32,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     console.log('[AuthProvider] Initial sync user check:', storedUser ? 'found' : 'not found');
     return storedUser;
   });
+  const [isAuthenticated, setIsAuthenticated] = useState(() => authService.isAuthenticatedSync());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,22 +46,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log('[Auth] Init - storedUser:', storedUser ? 'found' : 'not found');
         console.log('[Auth] Init - token:', token ? 'found' : 'not found');
         
-        if (storedUser && token) {
-          // Use stored user immediately - don't clear tokens on network failure
-          setUser(storedUser);
-          console.log('[Auth] Using stored user data');
-          
-          // Optionally try to refresh profile in background (don't clear on failure)
+        setIsAuthenticated(!!token);
+
+        if (token) {
+          // Prefer stored user; otherwise try to fetch profile. Never clear tokens on failure here.
+          if (storedUser) {
+            setUser(storedUser);
+            console.log('[Auth] Using stored user data');
+          } else {
+            console.log('[Auth] Token found but no stored user');
+          }
+
           try {
             const profile = await authService.getProfile();
             setUser(profile);
             console.log('[Auth] Profile refreshed from server');
           } catch (error) {
-            // Profile fetch failed - keep using stored data, don't logout
-            console.log('[Auth] Profile fetch failed, keeping stored user:', error);
+            console.log('[Auth] Profile fetch failed (keeping session):', error);
           }
         } else {
-          console.log('[Auth] No stored credentials found');
+          console.log('[Auth] No stored token found');
         }
       } catch (error) {
         console.error('[Auth] Initialization error:', error);
@@ -76,16 +81,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const login = async (username: string, password: string) => {
     const response = await authService.login({ username, password });
     setUser(response.user);
+    setIsAuthenticated(true);
   };
 
   const logout = async () => {
     await authService.logout();
     setUser(null);
+    setIsAuthenticated(false);
   };
 
   const value = {
     user,
-    isAuthenticated: !!user,
+    isAuthenticated,
     login,
     logout,
     loading,

@@ -1,5 +1,4 @@
 import { Preferences } from '@capacitor/preferences';
-import { Capacitor } from '@capacitor/core';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -28,45 +27,36 @@ export interface LoginResponse {
   tokens: AuthTokens;
 }
 
-// Check if we're running on a native platform
-const isNative = Capacitor.isNativePlatform();
-
 // Storage helper that uses Capacitor Preferences for mobile persistence
 const storage = {
   async setItem(key: string, value: string): Promise<void> {
     // Always set in localStorage first for immediate access
     localStorage.setItem(key, value);
-    
-    // Then persist to native storage if available
-    if (isNative) {
-      try {
-        await Preferences.set({ key, value });
-        console.log(`[Storage] Set ${key} in native storage`);
-      } catch (error) {
-        console.error(`[Storage] Failed to set ${key} in native storage:`, error);
-      }
+
+    // Persist via Preferences (native on Android/iOS; web fallback in browser)
+    try {
+      await Preferences.set({ key, value });
+      console.log(`[Storage] Set ${key} via Preferences`);
+    } catch (error) {
+      console.error(`[Storage] Preferences.set failed for ${key}:`, error);
     }
   },
 
   async getItem(key: string): Promise<string | null> {
-    // Try native storage first if available
-    if (isNative) {
-      try {
-        const { value } = await Preferences.get({ key });
-        if (value !== null) {
-          console.log(`[Storage] Got ${key} from native storage`);
-          // Sync to localStorage for consistency
-          localStorage.setItem(key, value);
-          return value;
-        }
-      } catch (error) {
-        console.error(`[Storage] Failed to get ${key} from native storage:`, error);
+    // Preferences is the source of truth on mobile. If it fails, fall back to localStorage.
+    try {
+      const { value } = await Preferences.get({ key });
+      if (value !== null) {
+        console.log(`[Storage] Got ${key} via Preferences`);
+        localStorage.setItem(key, value);
+        return value;
       }
+    } catch (error) {
+      console.error(`[Storage] Preferences.get failed for ${key}:`, error);
     }
-    
-    // Fallback to localStorage
+
     const value = localStorage.getItem(key);
-    console.log(`[Storage] Got ${key} from localStorage:`, value ? 'found' : 'not found');
+    console.log(`[Storage] Got ${key} from localStorage fallback:`, value ? 'found' : 'not found');
     return value;
   },
 
@@ -78,15 +68,12 @@ const storage = {
   async removeItem(key: string): Promise<void> {
     // Remove from localStorage
     localStorage.removeItem(key);
-    
-    // Remove from native storage if available
-    if (isNative) {
-      try {
-        await Preferences.remove({ key });
-        console.log(`[Storage] Removed ${key} from native storage`);
-      } catch (error) {
-        console.error(`[Storage] Failed to remove ${key} from native storage:`, error);
-      }
+
+    try {
+      await Preferences.remove({ key });
+      console.log(`[Storage] Removed ${key} via Preferences`);
+    } catch (error) {
+      console.error(`[Storage] Preferences.remove failed for ${key}:`, error);
     }
   }
 };
