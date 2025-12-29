@@ -5,23 +5,7 @@ on:
     branches:
       - main
       - develop
-    paths:
-      - 'frontend/app/**'
-      - 'android-app/**'
-      - '.github/workflows/build-android.yml'
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Build environment'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - development
 
 jobs:
   build-android:
@@ -36,8 +20,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/app/package-lock.json
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -47,11 +29,9 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: frontend/app
-        run: npm ci
-
-      - name: Install Capacitor CLI
-        working-directory: frontend/app
-        run: npm install @capacitor/cli @capacitor/core @capacitor/android --save-dev
+        run: |
+          npm install
+          npm install @capacitor/cli @capacitor/core @capacitor/android
 
       - name: Build frontend
         working-directory: frontend/app
@@ -59,68 +39,63 @@ jobs:
         env:
           VITE_API_URL: https://tars-bkv7.onrender.com
 
-      - name: Install Capacitor CLI
-        working-directory: frontend/app
-        run: npm install @capacitor/cli @capacitor/core @capacitor/android --save-dev
-
-      - name: Copy capacitor config to frontend
-        run: |
-          cp android-app/capacitor.config.json frontend/app/capacitor.config.json
-          echo "Capacitor config copied"
-
-      - name: Initialize and add Android platform
+      - name: Setup Capacitor config
         working-directory: frontend/app
         run: |
-          npx cap init "TARS" "com.tars.app" --web-dir=dist || echo "Already initialized"
-          npx cap add android || echo "Android already added"
+          cat > capacitor.config.json << 'EOF'
+          {
+            "appId": "com.tars.app",
+            "appName": "TARS",
+            "webDir": "dist",
+            "server": {
+              "androidScheme": "https"
+            }
+          }
+          EOF
 
-      - name: Initialize and add Android platform
+      - name: Initialize Capacitor
+        working-directory: frontend/app
+        run: npx cap init "TARS" "com.tars.app" --web-dir=dist || true
+
+      - name: Add Android platform
+        working-directory: frontend/app
+        run: npx cap add android
+
+      - name: Setup network security config
         working-directory: frontend/app
         run: |
-          npx cap init "TARS" "com.tars.app" --web-dir=dist || echo "Already initialized"
-          npx cap add android || echo "Android already added"
+          mkdir -p android/app/src/main/res/xml
+          cat > android/app/src/main/res/xml/network_security_config.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+              <domain-config cleartextTrafficPermitted="true">
+                  <domain includeSubdomains="true">192.168.198.127</domain>
+                  <domain includeSubdomains="true">10.0.2.2</domain>
+                  <domain includeSubdomains="true">localhost</domain>
+              </domain-config>
+              <base-config cleartextTrafficPermitted="false" />
+          </network-security-config>
+          EOF
 
-      - name: Copy Android configuration files
+      - name: Update AndroidManifest
+        working-directory: frontend/app
         run: |
-          echo "Copying network security config..."
-          mkdir -p frontend/app/android/app/src/main/res/xml
-          cp android-app/android/app/src/main/res/xml/network_security_config.xml frontend/app/android/app/src/main/res/xml/ || echo "Failed to copy network config"
-          
-          echo "Copying AndroidManifest..."
-          cp android-app/android/app/src/main/AndroidManifest.xml frontend/app/android/app/src/main/AndroidManifest.xml || echo "Failed to copy manifest"
-          
-          echo "Files copied successfully"
+          sed -i 's|<application|<application\n        android:networkSecurityConfig="@xml/network_security_config"\n        android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
+          sed -i 's|</manifest>|    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n</manifest>|' android/app/src/main/AndroidManifest.xml
 
       - name: Sync Capacitor
         working-directory: frontend/app
         run: npx cap sync android
 
-      - name: Grant execute permission for gradlew
+      - name: Build APK
         working-directory: frontend/app/android
-        run: chmod +x ./gradlew
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --stacktrace --info
 
-      - name: Build Android APK (Debug)
-        working-directory: frontend/app/android
-        run: ./gradlew assembleDebug --stacktrace
-
-      - name: Upload Debug APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: tars-debug-apk
-          path: frontend/app/android/app/build/outputs/apk/debug/*.apk
+          name: tars-app-debug
+          path: frontend/app/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
-
-      - name: Build Release APK (if main branch)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        working-directory: frontend/app/android
-        run: ./gradlew assembleRelease --stacktrace
-        continue-on-error: true
-
-      - name: Upload Release APK
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
-        with:
-          name: tars-release-apk
-          path: frontend/app/android/app/build/outputs/apk/release/*.apk
-          retention-days: 90
-        continue-on-error: true
