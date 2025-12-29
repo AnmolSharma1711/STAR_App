@@ -21,11 +21,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Setup Java
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Install frontend dependencies
         working-directory: frontend/app
@@ -85,44 +85,13 @@ jobs:
         working-directory: frontend/app
         run: npx cap add android
 
-      - name: Fix Java compatibility to Java 17
-        working-directory: frontend/app
+      - name: Ensure Android SDK is available
         run: |
-          echo "Fixing Java version in all Gradle files (android + node_modules)..."
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          echo "y" | sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-          # Find and patch every Gradle file (build.gradle / build.gradle.kts)
-          find .. -type f \( -name "build.gradle" -o -name "build.gradle.kts" \) | while read file; do
-            echo "Processing: $file"
-
-            # Replace VERSION_21 (or any higher) with VERSION_17
-            sed -i 's/JavaVersion\.VERSION_21/JavaVersion.VERSION_17/g' "$file"
-            sed -i 's/JavaVersion\.VERSION_[2-9][0-9]/JavaVersion.VERSION_17/g' "$file"
-
-            # Replace numeric compat settings (Groovy or Kotlin DSL)
-            sed -i 's/sourceCompatibility = 21/sourceCompatibility = 17/g' "$file"
-            sed -i 's/targetCompatibility = 21/targetCompatibility = 17/g' "$file"
-            sed -i 's/sourceCompatibility 21/sourceCompatibility 17/g' "$file"
-            sed -i 's/targetCompatibility 21/targetCompatibility 17/g' "$file"
-            sed -i 's/sourceCompatibility = JavaVersion.VERSION_21/sourceCompatibility = JavaVersion.VERSION_17/g' "$file"
-            sed -i 's/targetCompatibility = JavaVersion.VERSION_21/targetCompatibility = JavaVersion.VERSION_17/g' "$file"
-
-            # Replace JVM target
-            sed -i "s/jvmTarget = '[2-9][0-9]'/jvmTarget = '17'/g" "$file"
-            sed -i 's/jvmTarget = "[2-9][0-9]"/jvmTarget = "17"/g' "$file"
-            sed -i 's/jvmTarget = [2-9][0-9]/jvmTarget = 17/g' "$file"
-          done
-
-          echo "Java version forced to 17 in all Gradle files"
-
-      - name: Verify no Java 21 remains
-        working-directory: frontend/app
-        run: |
-          echo "Searching for Java 21 references..."
-          if find .. -type f \( -name "build.gradle" -o -name "build.gradle.kts" \) -exec grep -n "VERSION_21\|sourceCompatibility = 21\|targetCompatibility = 21\|jvmTarget = '21'\|jvmTarget = \"21\"" {} +; then
-            echo "⚠️ Found Java 21 references. Failing build." && exit 1
-          else
-            echo "✅ No Java 21 references detected."
-          fi
+      # Skipping Java version patching; we install JDK 21 instead
 
       - name: Setup network security config
         working-directory: frontend/app
@@ -152,7 +121,11 @@ jobs:
 
       - name: Build APK
         working-directory: frontend/app/android
+        env:
+          ORG_GRADLE_JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
+          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         run: |
+          echo "Using JAVA_HOME=$JAVA_HOME"
           chmod +x ./gradlew
           ./gradlew assembleDebug --stacktrace --info
 
