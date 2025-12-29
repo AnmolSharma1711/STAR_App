@@ -226,12 +226,19 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # CORS Settings
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:5173,http://127.0.0.1:5173',
+    default='http://localhost:5173,http://127.0.0.1:5173,https://tars-sage.vercel.app,https://tars-bkv7.onrender.com',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
+
+# CSRF Settings (relevant for cookie/session-based auth)
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='http://localhost:5173,http://127.0.0.1:5173,https://tars-sage.vercel.app,https://tars-bkv7.onrender.com',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
 
 # REST Framework Settings
 REST_FRAMEWORK = {
