@@ -90,6 +90,20 @@ jobs:
         working-directory: frontend/app
         run: npx cap add android
 
+      - name: Fix Kotlin version conflicts
+        working-directory: frontend/app
+        run: |
+          # Force consistent Kotlin version across all dependencies
+          cat >> android/app/build.gradle << 'EOF'
+
+          configurations.all {
+              resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+                  if (details.requested.group == 'org.jetbrains.kotlin') {
+                      details.useVersion '1.9.22'
+                  }
+              }
+          }
+          EOF
 
       # Skipping Java version patching; we install JDK 21 instead
 
