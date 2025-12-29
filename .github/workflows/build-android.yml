@@ -90,6 +90,19 @@ jobs:
         working-directory: frontend/app
         run: npx cap add android
 
+      - name: Verify Capacitor Plugins
+        working-directory: frontend/app
+        run: |
+          echo "Checking installed Capacitor plugins..."
+          npx cap ls
+          echo ""
+          echo "Verifying Preferences plugin in Android..."
+          if [ -f "android/app/src/main/assets/capacitor.plugins.json" ]; then
+            cat android/app/src/main/assets/capacitor.plugins.json
+          else
+            echo "capacitor.plugins.json not found yet"
+          fi
+
       - name: Fix Kotlin version conflicts
         working-directory: frontend/app
         run: |
