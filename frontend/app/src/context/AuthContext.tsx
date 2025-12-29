@@ -33,8 +33,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Check if user is already logged in on app start
     const initializeAuth = async () => {
       try {
-        const storedUser = authService.getUser();
-        const token = authService.getAccessToken();
+        const storedUser = await authService.getUser();
+        const token = await authService.getAccessToken();
         
         if (storedUser && token) {
           // Verify token is still valid by trying to refresh if needed
@@ -50,14 +50,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               setUser(profile);
             } catch (refreshError) {
               // Token refresh failed, clear everything
-              authService.clearTokens();
+              await authService.clearTokens();
               setUser(null);
             }
           }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        authService.clearTokens();
+        await authService.clearTokens();
         setUser(null);
       } finally {
         setLoading(false);
