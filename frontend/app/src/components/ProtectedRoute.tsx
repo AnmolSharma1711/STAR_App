@@ -7,15 +7,25 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  // First do a synchronous check using localStorage
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(() => {
+    // Immediate sync check from localStorage
+    const hasToken = authService.isAuthenticatedSync();
+    console.log('[ProtectedRoute] Sync auth check:', hasToken);
+    return hasToken ? true : null; // If token found, authenticated. If not, null to trigger async check
+  });
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const authenticated = await authService.isAuthenticated();
-      setIsAuthenticated(authenticated);
-    };
-    checkAuth();
-  }, []);
+    // If sync check didn't find token, do async check (native storage)
+    if (isAuthenticated === null) {
+      const checkAuth = async () => {
+        const authenticated = await authService.isAuthenticated();
+        console.log('[ProtectedRoute] Async auth check:', authenticated);
+        setIsAuthenticated(authenticated);
+      };
+      checkAuth();
+    }
+  }, [isAuthenticated]);
 
   if (isAuthenticated === null) {
     // Loading state while checking authentication
@@ -25,7 +35,8 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         alignItems: 'center', 
         justifyContent: 'center', 
         minHeight: '100vh',
-        color: 'white'
+        color: 'white',
+        background: '#0a0a0a'
       }}>
         <p>Loading...</p>
       </div>
@@ -33,6 +44,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!isAuthenticated) {
+    console.log('[ProtectedRoute] Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 

@@ -26,13 +26,19 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
+  // Initialize with sync check from localStorage for immediate access
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = authService.getUserSync();
+    console.log('[AuthProvider] Initial sync user check:', storedUser ? 'found' : 'not found');
+    return storedUser;
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check if user is already logged in on app start
     const initializeAuth = async () => {
       try {
+        // Try async check from native storage
         const storedUser = await authService.getUser();
         const token = await authService.getAccessToken();
         

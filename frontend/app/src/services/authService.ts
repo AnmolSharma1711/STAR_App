@@ -70,6 +70,11 @@ const storage = {
     return value;
   },
 
+  // Synchronous check for immediate access (uses localStorage only)
+  getItemSync(key: string): string | null {
+    return localStorage.getItem(key);
+  },
+
   async removeItem(key: string): Promise<void> {
     // Remove from localStorage
     localStorage.removeItem(key);
@@ -98,6 +103,11 @@ export const authService = {
     return await storage.getItem('access_token');
   },
 
+  // Synchronous version for immediate checks
+  getAccessTokenSync(): string | null {
+    return storage.getItemSync('access_token');
+  },
+
   async getRefreshToken(): Promise<string | null> {
     return await storage.getItem('refresh_token');
   },
@@ -118,10 +128,21 @@ export const authService = {
     return userStr ? JSON.parse(userStr) : null;
   },
 
-  // Check if user is authenticated
+  // Synchronous version for immediate checks
+  getUserSync(): User | null {
+    const userStr = storage.getItemSync('user');
+    return userStr ? JSON.parse(userStr) : null;
+  },
+
+  // Check if user is authenticated (async - checks native storage)
   async isAuthenticated(): Promise<boolean> {
     const token = await this.getAccessToken();
     return !!token;
+  },
+
+  // Synchronous check for immediate auth verification
+  isAuthenticatedSync(): boolean {
+    return !!this.getAccessTokenSync();
   },
 
   // Login
