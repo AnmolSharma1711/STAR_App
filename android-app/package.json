@@ -1,0 +1,26 @@
+{
+  "name": "tars-android-app",
+  "version": "1.0.0",
+  "description": "TARS Android Application",
+  "scripts": {
+    "install:app": "cd ../frontend/app && npm install",
+    "build": "cd ../frontend/app && npm run build",
+    "build:android": "cd ../frontend/app && npm run build --mode production",
+    "cap:sync": "npx cap sync",
+    "cap:open": "npx cap open android",
+    "android:setup": "npm run install:app && npx cap add android && npm run setup:configs",
+    "android:build": "npm run build:android && npm run cap:sync",
+    "android:dev": "npm run build && npm run cap:sync && npm run cap:open",
+    "setup:configs": "node setup-android-configs.js",
+    "generate:icons": "npx capacitor-assets generate --android",
+    "setup:full": "npm install && npm run android:setup && echo '\n⚠️  Now place your icon at resources/icon.png and run: npm run generate:icons'"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/cli": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
+  }
+}

@@ -30,12 +30,41 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const storedUser = authService.getUser();
-    if (storedUser && authService.isAuthenticated()) {
-      setUser(storedUser);
-    }
-    setLoading(false);
+    // Check if user is already logged in on app start
+    const initializeAuth = async () => {
+      try {
+        const storedUser = authService.getUser();
+        const token = authService.getAccessToken();
+        
+        if (storedUser && token) {
+          // Verify token is still valid by trying to refresh if needed
+          try {
+            // Try to get fresh profile to validate session
+            const profile = await authService.getProfile();
+            setUser(profile);
+          } catch (error) {
+            // If profile fetch fails, try to refresh token
+            try {
+              await authService.refreshToken();
+              const profile = await authService.getProfile();
+              setUser(profile);
+            } catch (refreshError) {
+              // Token refresh failed, clear everything
+              authService.clearTokens();
+              setUser(null);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        authService.clearTokens();
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (username: string, password: string) => {

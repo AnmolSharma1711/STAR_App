@@ -1,19 +1,32 @@
 .focus-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
   width: 100%;
   padding: 1rem 0;
 }
 
+@media (min-width: 640px) {
+  .focus-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+  }
+}
+
 .focus-card {
   position: relative;
-  height: 400px;
+  height: 350px;
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+@media (min-width: 640px) {
+  .focus-card {
+    height: 400px;
+  }
 }
 
 .focus-card:hover {

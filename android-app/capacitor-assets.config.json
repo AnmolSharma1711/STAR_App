@@ -1,0 +1,7 @@
+{
+  "android": {
+    "iconForeground": "resources/icon-foreground.png",
+    "iconBackground": "#0a0a0a",
+    "adaptiveIconRound": true
+  }
+}
