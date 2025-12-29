@@ -224,14 +224,34 @@ CLOUDINARY_STORAGE = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS Settings
+# Use specific origins for production and regex for flexible development
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
+
+# Production domains
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:5173,http://127.0.0.1:5173,https://tars-sage.vercel.app,https://tars-bkv7.onrender.com',
+    default='https://tars-sage.vercel.app,https://tars-bkv7.onrender.com',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 
-CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOW_CREDENTIALS = True
+# Development: Allow all localhost ports and local network IPs
+if DEBUG:
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^http://localhost:\d+$",
+        r"^http://127\.0\.0\.1:\d+$",
+        r"^http://192\.168\.\d{1,3}\.\d{1,3}:\d+$",
+        r"^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$",
+        r"^http://172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}:\d+$",
+        r"^capacitor://.*$",
+        r"^ionic://.*$",
+    ]
+else:
+    # Production: Only allow Capacitor schemes via regex
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^capacitor://.*$",
+        r"^ionic://.*$",
+    ]
 
 # CSRF Settings (relevant for cookie/session-based auth)
 CSRF_TRUSTED_ORIGINS = config(
