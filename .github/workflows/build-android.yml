@@ -55,80 +55,58 @@ jobs:
         env:
           VITE_API_URL: https://tars-bkv7.onrender.com
 
-      - name: Install Capacitor
+      - name: Install Capacitor dependencies
         working-directory: android-app
         run: npm install
 
+      - name: Copy capacitor config
+        run: |
+          cp android-app/capacitor.config.json frontend/app/capacitor.config.json
+
       - name: Add Android platform
-        working-directory: android-app
+        working-directory: frontend/app
         run: |
           npx cap add android || echo "Android platform already exists"
 
-      - name: Copy web assets to Capacitor
-        working-directory: android-app
-        run: |
-          rm -rf android/app/src/main/assets/public
-          mkdir -p android/app/src/main/assets/public
-          cp -r ../frontend/app/dist/* android/app/src/main/assets/public/
-
-      - name: Setup Android configuration files
-        working-directory: android-app
-        run: |
-          # Create res/xml directory if it doesn't exist
-          mkdir -p android/app/src/main/res/xml
-          
-          # Copy network security config
-          cp android/app/src/main/res/xml/network_security_config.xml android/app/src/main/res/xml/ || true
-          
-          # Copy AndroidManifest.xml
-          cp android/app/src/main/AndroidManifest.xml android/app/src/main/ || true
-
-      - name: Sync Capacitor
-        working-directory: android-app
+      - name: Sync Capacitor with built assets
+        working-directory: frontend/app
         run: npx cap sync android
 
+      - name: Copy Android configuration files
+        run: |
+          # Copy network security config
+          mkdir -p frontend/app/android/app/src/main/res/xml
+          cp android-app/android/app/src/main/res/xml/network_security_config.xml frontend/app/android/app/src/main/res/xml/
+          
+          # Update AndroidManifest.xml
+          cp android-app/android/app/src/main/AndroidManifest.xml frontend/app/android/app/src/main/AndroidManifest.xml
+
       - name: Grant execute permission for gradlew
-        working-directory: android-app/android
+        working-directory: frontend/app/android
         run: chmod +x ./gradlew
 
       - name: Build Android APK (Debug)
-        working-directory: android-app/android
+        working-directory: frontend/app/android
         run: ./gradlew assembleDebug --stacktrace
-
-      - name: Sign APK (if release)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        working-directory: android-app/android
-        run: ./gradlew assembleRelease --stacktrace
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: tars-debug-apk
-          path: android-app/android/app/build/outputs/apk/debug/*.apk
+          path: frontend/app/android/app/build/outputs/apk/debug/*.apk
           retention-days: 30
+
+      - name: Build Release APK (if main branch)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: frontend/app/android
+        run: ./gradlew assembleRelease --stacktrace
+        continue-on-error: true
 
       - name: Upload Release APK
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: tars-release-apk
-          path: android-app/android/app/build/outputs/apk/release/*.apk
+          path: frontend/app/android/app/build/outputs/apk/release/*.apk
           retention-days: 90
-
-      - name: Create Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v${{ github.run_number }}
-          name: Release v${{ github.run_number }}
-          files: |
-            android-app/android/app/build/outputs/apk/debug/*.apk
-            android-app/android/app/build/outputs/apk/release/*.apk
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
