@@ -154,6 +154,14 @@ jobs:
           convert resources/icon.png -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
           convert resources/icon.png -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
           convert resources/icon.png -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+          
+          # Remove any adaptive icon backgrounds that might interfere
+          rm -f android/app/src/main/res/mipmap-*/ic_launcher_background.png
+          rm -f android/app/src/main/res/mipmap-*/ic_launcher_foreground.png
+          rm -f android/app/src/main/res/drawable*/ic_launcher_background.xml
+          rm -f android/app/src/main/res/drawable*/ic_launcher_foreground.xml
+          rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
 
       - name: Build APK
         working-directory: frontend/app/android
