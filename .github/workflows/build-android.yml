@@ -39,6 +39,30 @@ jobs:
         env:
           VITE_API_URL: https://tars-bkv7.onrender.com
 
+      - name: Verify Capacitor config exists
+        working-directory: frontend/app
+        run: |
+          if [ ! -f "capacitor.config.json" ]; then
+            echo "Creating capacitor.config.json"
+            cat > capacitor.config.json << 'EOF'
+          {
+            "appId": "com.tars.app",
+            "appName": "TARS",
+            "webDir": "dist",
+            "server": {
+              "androidScheme": "https"
+            }
+          }
+          EOF
+          else
+            echo "capacitor.config.json already exists"
+          fi
+          cat capacitor.config.json
+
+      - name: Remove TypeScript config if exists
+        working-directory: frontend/app
+        run: rm -f capacitor.config.ts
+
       - name: Setup Capacitor config
         working-directory: frontend/app
         run: |
@@ -60,6 +84,22 @@ jobs:
       - name: Add Android platform
         working-directory: frontend/app
         run: npx cap add android
+
+      - name: Fix Java compatibility to Java 17
+        working-directory: frontend/app
+        run: |
+          # Update root build.gradle
+          if [ -f "android/build.gradle" ]; then
+            sed -i "s/JavaVersion.VERSION_[0-9]*/JavaVersion.VERSION_17/g" android/build.gradle
+          fi
+          
+          # Update app build.gradle
+          if [ -f "android/app/build.gradle" ]; then
+            sed -i "s/JavaVersion.VERSION_[0-9]*/JavaVersion.VERSION_17/g" android/app/build.gradle
+            sed -i "s/jvmTarget = '[0-9]*'/jvmTarget = '17'/g" android/app/build.gradle
+          fi
+          
+          echo "Java compatibility set to 17"
 
       - name: Setup network security config
         working-directory: frontend/app
