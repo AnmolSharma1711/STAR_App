@@ -88,18 +88,28 @@ jobs:
       - name: Fix Java compatibility to Java 17
         working-directory: frontend/app
         run: |
-          # Update root build.gradle
-          if [ -f "android/build.gradle" ]; then
-            sed -i "s/JavaVersion.VERSION_[0-9]*/JavaVersion.VERSION_17/g" android/build.gradle
-          fi
+          echo "Fixing Java version in all Gradle files..."
           
-          # Update app build.gradle
-          if [ -f "android/app/build.gradle" ]; then
-            sed -i "s/JavaVersion.VERSION_[0-9]*/JavaVersion.VERSION_17/g" android/app/build.gradle
-            sed -i "s/jvmTarget = '[0-9]*'/jvmTarget = '17'/g" android/app/build.gradle
-          fi
+          # Find and fix all build.gradle files
+          find android -name "build.gradle" -type f | while read file; do
+            echo "Processing: $file"
+            
+            # Replace VERSION_21 with VERSION_17
+            sed -i 's/JavaVersion\.VERSION_21/JavaVersion.VERSION_17/g' "$file"
+            sed -i 's/JavaVersion\.VERSION_[2-9][0-9]/JavaVersion.VERSION_17/g' "$file"
+            
+            # Replace numeric versions
+            sed -i 's/sourceCompatibility = 21/sourceCompatibility = 17/g' "$file"
+            sed -i 's/targetCompatibility = 21/targetCompatibility = 17/g' "$file"
+            sed -i 's/sourceCompatibility 21/sourceCompatibility 17/g' "$file"
+            sed -i 's/targetCompatibility 21/targetCompatibility 17/g' "$file"
+            
+            # Replace jvmTarget
+            sed -i "s/jvmTarget = '[2-9][0-9]'/jvmTarget = '17'/g" "$file"
+            sed -i 's/jvmTarget = "[2-9][0-9]"/jvmTarget = "17"/g' "$file"
+          done
           
-          echo "Java compatibility set to 17"
+          echo "Java version fixed to 17 in all Gradle files"
 
       - name: Setup network security config
         working-directory: frontend/app
