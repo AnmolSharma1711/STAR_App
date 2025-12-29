@@ -133,7 +133,14 @@ jobs:
 
       - name: Sync Capacitor
         working-directory: frontend/app
-        run: npx cap sync android
+        run: |
+          npx cap sync android
+          echo "Verifying Capacitor Preferences plugin..."
+          if grep -r "preferences" android/app/src/main/assets/capacitor.plugins.json; then
+            echo "✓ Preferences plugin registered"
+          else
+            echo "⚠ Preferences plugin not found in capacitor.plugins.json"
+          fi
 
       - name: Generate and replace app icons
         working-directory: frontend/app

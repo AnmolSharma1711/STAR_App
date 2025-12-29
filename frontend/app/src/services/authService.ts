@@ -32,7 +32,9 @@ const storage = {
   async setItem(key: string, value: string): Promise<void> {
     try {
       await Preferences.set({ key, value });
+      console.log(`[Storage] Set ${key} successfully using Preferences`);
     } catch (error) {
+      console.warn(`[Storage] Preferences.set failed, using localStorage fallback:`, error);
       // Fallback to localStorage for web
       localStorage.setItem(key, value);
     }
@@ -41,8 +43,10 @@ const storage = {
   async getItem(key: string): Promise<string | null> {
     try {
       const { value } = await Preferences.get({ key });
+      console.log(`[Storage] Get ${key}:`, value ? 'found' : 'not found', 'using Preferences');
       return value;
     } catch (error) {
+      console.warn(`[Storage] Preferences.get failed, using localStorage fallback:`, error);
       // Fallback to localStorage for web
       return localStorage.getItem(key);
     }
@@ -51,7 +55,9 @@ const storage = {
   async removeItem(key: string): Promise<void> {
     try {
       await Preferences.remove({ key });
+      console.log(`[Storage] Removed ${key} successfully using Preferences`);
     } catch (error) {
+      console.warn(`[Storage] Preferences.remove failed, using localStorage fallback:`, error);
       // Fallback to localStorage for web
       localStorage.removeItem(key);
     }

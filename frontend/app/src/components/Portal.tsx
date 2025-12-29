@@ -110,7 +110,7 @@ function Portal() {
   const handleDownload = async (resourceId: number, downloadUrl: string) => {
     try {
       console.log('Download clicked for resource:', resourceId);
-      const token = localStorage.getItem('access_token');
+      const token = await authService.getAccessToken();
       if (token) {
         console.log('Incrementing download count...');
         // Increment download count
