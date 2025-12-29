@@ -36,29 +36,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const storedUser = await authService.getUser();
         const token = await authService.getAccessToken();
         
+        console.log('[Auth] Init - storedUser:', storedUser ? 'found' : 'not found');
+        console.log('[Auth] Init - token:', token ? 'found' : 'not found');
+        
         if (storedUser && token) {
-          // Verify token is still valid by trying to refresh if needed
+          // Use stored user immediately - don't clear tokens on network failure
+          setUser(storedUser);
+          console.log('[Auth] Using stored user data');
+          
+          // Optionally try to refresh profile in background (don't clear on failure)
           try {
-            // Try to get fresh profile to validate session
             const profile = await authService.getProfile();
             setUser(profile);
+            console.log('[Auth] Profile refreshed from server');
           } catch (error) {
-            // If profile fetch fails, try to refresh token
-            try {
-              await authService.refreshToken();
-              const profile = await authService.getProfile();
-              setUser(profile);
-            } catch (refreshError) {
-              // Token refresh failed, clear everything
-              await authService.clearTokens();
-              setUser(null);
-            }
+            // Profile fetch failed - keep using stored data, don't logout
+            console.log('[Auth] Profile fetch failed, keeping stored user:', error);
           }
+        } else {
+          console.log('[Auth] No stored credentials found');
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
-        await authService.clearTokens();
-        setUser(null);
+        console.error('[Auth] Initialization error:', error);
+        // Don't clear tokens on init error - might be temporary
       } finally {
         setLoading(false);
       }
