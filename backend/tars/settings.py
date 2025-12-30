@@ -153,10 +153,22 @@ def _database_config_from_url(db_url: str) -> dict:
 
 _db_url = _normalize_database_url(os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None))
 
+# Check if we should use SQLite for local development (default: True for easy setup)
+USE_SQLITE = config('USE_SQLITE', default=True, cast=bool)
+
 if _db_url:
+    # If DATABASE_URL is provided, use it (production/staging)
     DATABASES = {'default': _database_config_from_url(_db_url)}
+elif USE_SQLITE:
+    # Use SQLite for local development (no PostgreSQL needed) - DEFAULT
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 else:
-    # Fallback for local/dev if DATABASE_URL isn't provided
+    # Fallback for local PostgreSQL if USE_SQLITE=False
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',

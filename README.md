@@ -40,7 +40,7 @@ cd TARS
 cd backend
 
 # Create virtual environment
-python3 -m venv venv
+python -m venv venv
 
 # Activate virtual environment
 source venv/bin/activate  # On macOS/Linux
@@ -50,19 +50,17 @@ venv\Scripts\activate  # On Windows
 # Install dependencies
 pip install -r requirements.txt
 
-# Create .env file
-cp .env.example .env
-# Edit .env with your settings
-
-# Run migrations (requires PostgreSQL running)
+# Run migrations (uses SQLite by default - no database setup needed!)
 python manage.py migrate
 
-# Create superuser
+# Create superuser (optional)
 python manage.py createsuperuser
 
 # Run development server
 python manage.py runserver
 ```
+
+> **Note:** By default, the backend uses SQLite for local development, so you don't need to set up PostgreSQL. If you want to use PostgreSQL, create a `.env` file from `.env.example` and set `USE_SQLITE=False`.
 
 ### 3. Frontend Setup
 
