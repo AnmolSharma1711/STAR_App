@@ -227,7 +227,22 @@ class Class(models.Model):
     
     title = models.CharField(max_length=300)
     description = models.TextField()
-    instructor = models.CharField(max_length=200)
+    # Changed: instructor is now a ForeignKey to TeamMember
+    instructor = models.ForeignKey(
+        TeamMember,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='classes_taught',
+        help_text="Instructor from team members. If not set, use instructor_name field.",
+    )
+    # Keep original instructor text as instructor_name for backward compatibility and "Other" option
+    instructor_name = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        help_text="Name of instructor if not a team member (for 'Other' option)",
+    )
     difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='beginner')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='upcoming')
     thumbnail = models.ImageField(upload_to='classes/', blank=True, null=True)
@@ -251,6 +266,15 @@ class Class(models.Model):
     
     def __str__(self):
         return f"{self.title} - {self.get_status_display()}"
+    
+    @property
+    def instructor_display(self):
+        """Get instructor name for display"""
+        if self.instructor:
+            return self.instructor.name
+        elif self.instructor_name:
+            return self.instructor_name
+        return "Unknown"
     
     @property
     def is_full(self):
@@ -419,3 +443,132 @@ class Resource(models.Model):
         if self.tags:
             return [tag.strip() for tag in self.tags.split(',')]
         return []
+
+
+class Meeting(models.Model):
+    """Meetings scheduled by team members for specific domains or all members"""
+    
+    STATUS_CHOICES = [
+        ('upcoming', 'Upcoming'),
+        ('ongoing', 'Ongoing'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    title = models.CharField(max_length=300, help_text="Meeting title/topic")
+    description = models.TextField(blank=True, null=True, help_text="Meeting agenda and details")
+    
+    # Scheduling and speaker
+    scheduled_by = models.ForeignKey(
+        TeamMember,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='meetings_scheduled',
+        help_text="Team member (admin/lead/mentor) who scheduled this meeting",
+    )
+    speaker = models.ForeignKey(
+        TeamMember,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='meetings_led',
+        help_text="Speaker/Presenter if from team members",
+    )
+    speaker_other = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        help_text="Name of speaker if not a team member (e.g., guest speaker)",
+    )
+    
+    # Domain visibility - if no domains selected, meeting is for all
+    domains = models.ManyToManyField(
+        Domain,
+        blank=True,
+        related_name='meetings',
+        help_text="Select domains who can see this meeting. Leave empty to make visible to all.",
+    )
+    
+    # Timing
+    scheduled_date = models.DateTimeField(help_text="When the meeting is scheduled")
+    end_time = models.DateTimeField(blank=True, null=True, help_text="When the meeting ends")
+    
+    # Meeting link and location
+    meeting_link = models.URLField(blank=True, null=True, help_text="Zoom/Google Meet/Teams link")
+    location = models.CharField(
+        max_length=300,
+        blank=True,
+        null=True,
+        help_text="Physical location if in-person",
+    )
+    
+    # Status and visibility
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='upcoming')
+    is_active = models.BooleanField(default=True)
+    
+    # Tracking
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-scheduled_date']
+        verbose_name = "Meeting"
+        verbose_name_plural = "Meetings"
+    
+    def __str__(self):
+        speaker_name = self.speaker.name if self.speaker else (self.speaker_other or "Unknown")
+        return f"{self.title} - {speaker_name} ({self.scheduled_date.strftime('%Y-%m-%d %H:%M')})"
+    
+    @property
+    def speaker_display(self):
+        """Get speaker name for display"""
+        if self.speaker:
+            return self.speaker.name
+        elif self.speaker_other:
+            return self.speaker_other
+        return "Unknown"
+    
+    @property
+    def is_for_all_domains(self):
+        """Check if meeting is visible to all domains"""
+        return self.domains.count() == 0
+    
+    @property
+    def duration_minutes(self):
+        """Calculate meeting duration in minutes"""
+        if self.end_time:
+            delta = self.end_time - self.scheduled_date
+            return int(delta.total_seconds() / 60)
+        return None
+    
+    @property
+    def computed_status(self):
+        """Compute status based on time"""
+        from django.utils import timezone
+        
+        if self.status == 'cancelled':
+            return 'cancelled'
+        
+        now = timezone.now()
+        
+        start = self.scheduled_date
+        if start.tzinfo is None:
+            start = timezone.make_aware(start)
+        
+        if now < start:
+            return 'upcoming'
+        
+        if self.end_time:
+            end = self.end_time
+            if end.tzinfo is None:
+                end = timezone.make_aware(end)
+            
+            if now <= end:
+                return 'ongoing'
+        else:
+            # If no end_time, consider it ongoing if within 1 hour of start
+            from datetime import timedelta
+            if now <= start + timedelta(hours=1):
+                return 'ongoing'
+        
+        return 'completed'

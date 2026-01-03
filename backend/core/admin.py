@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SiteSettings, Sponsor, SocialLink, Class, Resource, TeamMember, Domain, Member
+from .models import SiteSettings, Sponsor, SocialLink, Class, Resource, TeamMember, Domain, Member, Meeting
 
 
 @admin.register(SiteSettings)
@@ -121,16 +121,20 @@ class SocialLinkAdmin(admin.ModelAdmin):
 
 @admin.register(Class)
 class ClassAdmin(admin.ModelAdmin):
-    list_display = ['title', 'instructor', 'difficulty', 'status', 'start_date', 'enrolled_count', 'max_participants', 'is_active']
+    list_display = ['title', 'instructor_display', 'difficulty', 'status', 'start_date', 'enrolled_count', 'max_participants', 'is_active']
     list_filter = ['difficulty', 'status', 'is_active', 'start_date']
-    search_fields = ['title', 'instructor', 'description']
+    search_fields = ['title', 'instructor__name', 'instructor_name', 'description']
     list_editable = ['is_active', 'status']
     ordering = ['order', '-start_date']
     date_hierarchy = 'start_date'
     
     fieldsets = (
         ('Basic Information', {
-            'fields': ('title', 'description', 'instructor', 'thumbnail')
+            'fields': ('title', 'description', 'thumbnail')
+        }),
+        ('Instructor', {
+            'fields': ('instructor', 'instructor_name'),
+            'description': 'Select instructor from team members, or leave empty and fill instructor_name for external instructors.'
         }),
         ('Class Details', {
             'fields': ('difficulty', 'status', 'duration', 'start_date', 'end_date')
@@ -147,6 +151,12 @@ class ClassAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ['created_at', 'updated_at']
+    
+    def instructor_display(self, obj):
+        if obj.instructor:
+            return obj.instructor.name
+        return obj.instructor_name or "Unknown"
+    instructor_display.short_description = 'Instructor'
 
 
 @admin.register(Resource)
@@ -177,3 +187,59 @@ class ResourceAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ['created_at', 'updated_at', 'download_count']
+
+
+@admin.register(Meeting)
+class MeetingAdmin(admin.ModelAdmin):
+    list_display = ['title', 'speaker_display', 'scheduled_date', 'status', 'domain_list', 'scheduled_by_display', 'is_active']
+    list_filter = ['status', 'is_active', 'domains', 'scheduled_date']
+    search_fields = ['title', 'description', 'speaker__name', 'speaker_other', 'scheduled_by__name']
+    list_editable = ['is_active', 'status']
+    ordering = ['-scheduled_date']
+    date_hierarchy = 'scheduled_date'
+    filter_horizontal = ['domains']
+    
+    fieldsets = (
+        ('Meeting Information', {
+            'fields': ('title', 'description')
+        }),
+        ('Speaker', {
+            'fields': ('speaker', 'speaker_other'),
+            'description': 'Select speaker from team members, or leave empty and fill speaker_other for guest speakers.'
+        }),
+        ('Scheduling', {
+            'fields': ('scheduled_by', 'scheduled_date', 'end_time')
+        }),
+        ('Visibility', {
+            'fields': ('domains',),
+            'description': 'Select which domains can see this meeting. Leave empty to make it visible to all members.'
+        }),
+        ('Location & Links', {
+            'fields': ('meeting_link', 'location')
+        }),
+        ('Status', {
+            'fields': ('status', 'is_active')
+        }),
+    )
+    
+    readonly_fields = ['created_at', 'updated_at']
+    
+    def speaker_display(self, obj):
+        if obj.speaker:
+            return obj.speaker.name
+        return obj.speaker_other or "Unknown"
+    speaker_display.short_description = 'Speaker'
+    
+    def scheduled_by_display(self, obj):
+        if obj.scheduled_by:
+            return obj.scheduled_by.name
+        return "Unknown"
+    scheduled_by_display.short_description = 'Scheduled By'
+    
+    def domain_list(self, obj):
+        if obj.is_for_all_domains:
+            return "All Domains"
+        domains = obj.domains.all()
+        return ", ".join([d.display_name for d in domains]) if domains.exists() else "None"
+    domain_list.short_description = 'Domains'
+

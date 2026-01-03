@@ -25,7 +25,7 @@ from . import auth_views
 from rest_framework_simplejwt.views import TokenRefreshView
 from core.views import (
     SiteSettingsViewSet, SponsorViewSet, SocialLinkViewSet,
-    ClassViewSet, ResourceViewSet, TeamMemberViewSet, DomainViewSet, MemberViewSet, home_page_data, member_portal_data,
+    ClassViewSet, ResourceViewSet, TeamMemberViewSet, DomainViewSet, MemberViewSet, MeetingViewSet, home_page_data, member_portal_data,
     increment_download
 )
 
@@ -39,6 +39,7 @@ router.register(r'domains', DomainViewSet)
 router.register(r'members', MemberViewSet)
 router.register(r'classes', ClassViewSet)
 router.register(r'resources', ResourceViewSet)
+router.register(r'meetings', MeetingViewSet)
 
 # Customize admin site headers
 admin.site.site_header = "TARS Club Administration"

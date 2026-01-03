@@ -21,7 +21,10 @@ export interface ClassData {
   id: number;
   title: string;
   description: string;
-  instructor: string;
+  instructor: number | null;
+  instructor_id: number | null;
+  instructor_display: string;
+  instructor_name: string | null;
   difficulty: string;
   difficulty_display: string;
   status: string;
@@ -66,9 +69,47 @@ export interface ResourceData {
   updated_at: string;
 }
 
+export interface DomainData {
+  id: number;
+  name: string;
+  display_name: string;
+  description?: string;
+  logo?: string;
+  is_active: boolean;
+}
+
+export interface MeetingData {
+  id: number;
+  title: string;
+  description?: string;
+  scheduled_by: number | null;
+  scheduled_by_id: number | null;
+  scheduled_by_name: string;
+  speaker: number | null;
+  speaker_id: number | null;
+  speaker_name: string;
+  speaker_other?: string;
+  domains: number[];
+  domains_detail: DomainData[];
+  is_for_all_domains: boolean;
+  scheduled_date: string;
+  scheduled_date_formatted: string;
+  end_time?: string;
+  duration_minutes?: number;
+  meeting_link?: string;
+  location?: string;
+  status: string;
+  status_display: string;
+  computed_status: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface MemberPortalData {
   classes: ClassData[];
   resources: ResourceData[];
+  meetings: MeetingData[];
 }
 
 export const api = {
@@ -134,5 +175,22 @@ export const api = {
       throw new Error('Failed to increment download count');
     }
     return response.json();
+  },
+
+  async getMeetings(token: string): Promise<MeetingData[]> {
+    const response = await fetch(`${API_BASE_URL}/api/meetings/`, {
+      mode: 'cors',
+      credentials: 'include',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch meetings');
+    }
+    const data = await response.json();
+    // Handle both paginated response {results: [...]} and direct array response
+    return Array.isArray(data) ? data : (data.results || []);
   },
 };
