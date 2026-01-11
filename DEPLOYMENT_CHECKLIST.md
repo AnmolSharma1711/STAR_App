@@ -39,7 +39,7 @@
    Copy-paste these EXACTLY:
 
    ```bash
-   SECRET_KEY=jkdowuel!42%+qxhd&)!o_4qwbc0%3*^k+h*^62csho4)m1ol2
+   SECRET_KEY=your-secret-key-here
    DEBUG=False
    DATABASE_URL=postgresql://neondb_owner:npg_F0AGxH3uream@ep-shy-hat-a8ueooa1-pooler.eastus2.azure.neon.tech/neondb?sslmode=require&channel_binding=require
    CLOUDINARY_CLOUD_NAME=dfeuvxtao

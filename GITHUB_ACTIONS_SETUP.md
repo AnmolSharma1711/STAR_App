@@ -113,7 +113,7 @@ Every time you push code, GitHub Actions will:
 
 **Environment Variables** (copy from RENDER_ENV_VARS.md):
 ```bash
-SECRET_KEY=jkdowuel!42%+qxhd&)!o_4qwbc0%3*^k+h*^62csho4)m1ol2
+SECRET_KEY=your-secret-key-here
 DATABASE_URL=postgresql://neondb_owner:npg_F0AGxH3uream@ep-shy-hat-a8ueooa1-pooler.eastus2.azure.neon.tech/neondb?sslmode=require&channel_binding=require
 CLOUDINARY_CLOUD_NAME=dfeuvxtao
 CLOUDINARY_API_KEY=221856271865514
