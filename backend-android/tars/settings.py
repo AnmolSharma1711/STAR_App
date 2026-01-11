@@ -1,0 +1,311 @@
+"""
+Django settings for tars project - ANDROID BACKEND
+
+This is a specialized backend configuration for the Android app.
+Both the website backend and Android backend share the same database
+but have different CORS and security configurations.
+
+Key differences from website backend:
+- Android-specific CORS settings (Capacitor schemes)
+- Relaxed network security for mobile apps
+- Same database connection (shares data with website)
+- Optimized for mobile API consumption
+"""
+
+from pathlib import Path
+from decouple import config
+import os
+from dotenv import load_dotenv
+from urllib.parse import urlparse, parse_qsl
+
+load_dotenv()
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-)bh*bnm7t^jtzq@t-ym!)973(-!@o7rt_*ju##k_u&fsxi@8^3')
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = config('DEBUG', default=True, cast=bool)
+
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='localhost,127.0.0.1',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
+
+# Add Render hostname if present
+if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
+    ALLOWED_HOSTS.append(os.environ.get('RENDER_EXTERNAL_HOSTNAME'))
+
+
+# Application definition
+
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "cloudinary_storage",
+    "cloudinary",
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "corsheaders",
+    "core",
+]
+
+MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+]
+
+
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+ROOT_URLCONF = "tars.urls"
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = "tars.wsgi.application"
+
+
+# Database
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+
+def _normalize_database_url(value: str | None) -> str | None:
+    if not value:
+        return None
+    value = value.strip()
+    # Guard against accidentally including quotes in env values
+    if (value.startswith("'") and value.endswith("'")) or (value.startswith('"') and value.endswith('"')):
+        value = value[1:-1].strip()
+    return value or None
+
+
+def _database_config_from_url(db_url: str) -> dict:
+    parsed = urlparse(db_url)
+    options = dict(parse_qsl(parsed.query))
+
+    # Neon requires SSL. If not explicitly set in DATABASE_URL, default it.
+    host = parsed.hostname or ''
+    if host.endswith('neon.tech') and 'sslmode' not in options:
+        options['sslmode'] = os.getenv('PGSSLMODE', 'require')
+
+    # Respect port in DATABASE_URL (important for managed DBs/poolers).
+    port = parsed.port or int(os.getenv('DB_PORT', '5432'))
+
+    return {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': (parsed.path or '').lstrip('/'),
+        'USER': parsed.username,
+        'PASSWORD': parsed.password,
+        'HOST': parsed.hostname,
+        'PORT': port,
+        'OPTIONS': options,
+    }
+
+
+_db_url = _normalize_database_url(os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None))
+
+# Check if we should use SQLite for local development
+# Only defaults to True if DATABASE_URL is not set
+USE_SQLITE = config('USE_SQLITE', default=not bool(_db_url), cast=bool)
+
+if _db_url:
+    # If DATABASE_URL is provided, always use it (production/staging)
+    # THIS IS THE SAME DATABASE AS THE WEBSITE BACKEND
+    DATABASES = {'default': _database_config_from_url(_db_url)}
+elif USE_SQLITE:
+    # Use SQLite for local development (no PostgreSQL needed) - DEFAULT when no DATABASE_URL
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    # Fallback for local PostgreSQL if USE_SQLITE=False and no DATABASE_URL
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='tars_db'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default='postgres'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
+
+
+# Password validation
+# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+]
+
+
+# Internationalization
+# https://docs.djangoproject.com/en/5.2/topics/i18n/
+
+LANGUAGE_CODE = "en-us"
+
+TIME_ZONE = "Asia/Kolkata"
+
+USE_I18N = True
+
+USE_TZ = True
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
+
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Media files (User uploaded content)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# Cloudinary Config
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ============================================================================
+# ANDROID-SPECIFIC CORS SETTINGS
+# ============================================================================
+# These settings are optimized for mobile app connections
+# Website backend has different CORS settings
+
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
+
+# Android-specific allowed origins
+CORS_ALLOWED_ORIGINS = []
+
+# Development: Allow all localhost and local network IPs + Capacitor schemes
+if DEBUG:
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        # Local development
+        r"^http://localhost:\d+$",
+        r"^http://127\.0\.0\.1:\d+$",
+        r"^http://192\.168\.\d{1,3}\.\d{1,3}:\d+$",
+        r"^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$",
+        r"^http://172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}:\d+$",
+        # Capacitor schemes for Android
+        r"^https://localhost$",
+        r"^capacitor://.*$",
+        r"^ionic://.*$",
+        r"^http://localhost$",
+    ]
+else:
+    # Production: Only allow Capacitor and native app schemes
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^https://localhost$",
+        r"^capacitor://.*$",
+        r"^ionic://.*$",
+        r"^http://localhost$",
+    ]
+    
+    # Add production Android backend URL if specified
+    android_backend_url = os.environ.get('ANDROID_BACKEND_URL')
+    if android_backend_url:
+        CORS_ALLOWED_ORIGINS.append(android_backend_url)
+
+# CSRF Settings - Android-optimized
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='http://localhost,https://localhost',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
+
+# Add production Android backend URL to CSRF trusted origins
+if not DEBUG:
+    android_backend_url = os.environ.get('ANDROID_BACKEND_URL')
+    if android_backend_url and android_backend_url not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(android_backend_url)
+
+# REST Framework Settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
+}
+
+# JWT Settings
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+}
