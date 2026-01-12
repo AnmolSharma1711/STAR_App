@@ -120,9 +120,12 @@ class ClassSerializer(serializers.ModelSerializer):
     
     def get_start_date_formatted(self, obj):
         """Format start date"""
-        start_date = obj.start_date
-        # Simple formatting without timezone conversion to avoid issues
-        return start_date.strftime('%B %d, %Y at %I:%M %p')
+        if not obj.start_date:
+            return "Date not set"
+        try:
+            return obj.start_date.strftime('%B %d, %Y at %I:%M %p')
+        except Exception as e:
+            return f"Invalid date: {str(e)}"
 
 
 class ResourceSerializer(serializers.ModelSerializer):
