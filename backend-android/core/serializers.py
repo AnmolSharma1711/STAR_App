@@ -119,22 +119,10 @@ class ClassSerializer(serializers.ModelSerializer):
         return obj.computed_status_display
     
     def get_start_date_formatted(self, obj):
-        """Format start date in IST timezone"""
-        from django.utils import timezone
-        import pytz
-        
+        """Format start date"""
         start_date = obj.start_date
-        
-        # If naive datetime, make it aware
-        if start_date.tzinfo is None:
-            start_date = timezone.make_aware(start_date)
-        
-        # Convert to IST timezone
-        ist = pytz.timezone('Asia/Kolkata')
-        start_date_ist = start_date.astimezone(ist)
-        
-        # Format: "December 28, 2025 at 02:30 PM"
-        return start_date_ist.strftime('%B %d, %Y at %I:%M %p')
+        # Simple formatting without timezone conversion to avoid issues
+        return start_date.strftime('%B %d, %Y at %I:%M %p')
 
 
 class ResourceSerializer(serializers.ModelSerializer):
