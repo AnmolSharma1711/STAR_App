@@ -38,6 +38,9 @@ urlpatterns = [
     # Root endpoint
     path("", views.root, name="root"),
     
+    # Test endpoint for debugging
+    path("api/test/classes/", views.test_classes, name="test_classes"),
+    
     # Admin
     path("admin/", admin.site.urls),
     

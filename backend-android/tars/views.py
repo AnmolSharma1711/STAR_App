@@ -81,3 +81,44 @@ def api_info(request):
             'info': '/api/info/'
         }
     })
+
+
+@api_view(['GET'])
+def test_classes(request):
+    """Test endpoint to debug class serialization"""
+    import traceback
+    try:
+        from core.models import Class
+        from core.serializers import ClassSerializer
+        
+        classes = Class.objects.all()
+        result = {
+            "count": classes.count(),
+            "classes": []
+        }
+        
+        # Try to serialize each class individually to find the problematic one
+        for cls in classes:
+            try:
+                serialized = ClassSerializer(cls).data
+                result["classes"].append({
+                    "id": cls.id,
+                    "title": cls.title,
+                    "status": "OK",
+                    "data": serialized
+                })
+            except Exception as e:
+                result["classes"].append({
+                    "id": cls.id,
+                    "title": cls.title,
+                    "status": "ERROR",
+                    "error": str(e),
+                    "traceback": traceback.format_exc()
+                })
+        
+        return Response(result)
+    except Exception as e:
+        return Response({
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }, status=500)
