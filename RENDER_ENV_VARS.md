@@ -10,7 +10,7 @@
 
 ```bash
 # Django Core Settings
-SECRET_KEY=your-secret-key-here
+SECRET_KEY=%l&#9am8j^@=yy6@9*38pj3ea-^%#p(z7z3oh4j$bf7+_q9q4^
 DEBUG=False
 ALLOWED_HOSTS=tars-android-backend.onrender.com
 
