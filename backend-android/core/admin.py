@@ -121,12 +121,11 @@ class SocialLinkAdmin(admin.ModelAdmin):
 
 @admin.register(Class)
 class ClassAdmin(admin.ModelAdmin):
-    list_display = ['title', 'instructor', 'difficulty', 'status', 'start_date', 'enrolled_count', 'max_participants', 'is_active']
-    list_filter = ['difficulty', 'status', 'is_active', 'start_date']
+    list_display = ['title', 'instructor', 'difficulty', 'status', 'is_active']
+    list_filter = ['difficulty', 'status', 'is_active']
     search_fields = ['title', 'instructor', 'description']
-    list_editable = ['is_active', 'status']
-    ordering = ['order', '-start_date']
-    date_hierarchy = 'start_date'
+    list_editable = ['is_active']
+    ordering = ['-id']
     
     fieldsets = (
         ('Basic Information', {
