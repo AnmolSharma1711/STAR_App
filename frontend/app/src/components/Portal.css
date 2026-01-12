@@ -114,6 +114,35 @@
   box-sizing: border-box;
 }
 
+.portal-error-banner {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 69, 58, 0.2) 100%);
+  border: 2px solid rgba(255, 107, 107, 0.5);
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  animation: fadeIn 0.5s ease;
+}
+
+.portal-error-banner p {
+  color: #fff;
+  font-size: 1rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .portal-section {
   margin-bottom: 3rem;
 }

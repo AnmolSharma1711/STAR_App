@@ -21,6 +21,7 @@ function Portal() {
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [resources, setResources] = useState<ResourceData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,12 +57,20 @@ function Portal() {
       }
       
       console.log('Fetching portal data with token...');
+      console.log('API URL:', API_BASE_URL);
       const data = await api.getMemberPortalData(token);
       console.log('Portal data received:', data);
-      setClasses(data.classes);
-      setResources(data.resources);
+      setClasses(data.classes || []);
+      setResources(data.resources || []);
+      
+      // Show message if no data
+      if ((!data.classes || data.classes.length === 0) && (!data.resources || data.resources.length === 0)) {
+        setError('No classes or resources available yet. Contact your admin to add content.');
+      }
     } catch (error) {
       console.error('Failed to load portal data:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load portal data';
+      setError(`Connection Error: ${errorMessage}. Please check your network connection.`);
       // Set empty data on error so page still loads
       setClasses([]);
       setResources([]);
@@ -174,6 +183,13 @@ function Portal() {
       </nav>
 
       <main className="portal-content">
+        {/* Error Message */}
+        {error && (
+          <div className="portal-error-banner">
+            <p>⚠️ {error}</p>
+          </div>
+        )}
+
         {/* Classes Section */}
         <section className="portal-section">
           <div className="section-header">
