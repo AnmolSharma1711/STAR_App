@@ -227,7 +227,7 @@ class Class(models.Model):
     
     title = models.CharField(max_length=300)
     description = models.TextField()
-    instructor = models.CharField(max_length=200)
+    instructor_id = models.CharField(max_length=200, db_column='instructor_id')  # Match actual DB column
     difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='beginner')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='upcoming')
     thumbnail = models.ImageField(upload_to='classes/', blank=True, null=True)

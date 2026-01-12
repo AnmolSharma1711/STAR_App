@@ -121,9 +121,9 @@ class SocialLinkAdmin(admin.ModelAdmin):
 
 @admin.register(Class)
 class ClassAdmin(admin.ModelAdmin):
-    list_display = ['title', 'instructor', 'difficulty', 'status', 'is_active']
+    list_display = ['title', 'instructor_id', 'difficulty', 'status', 'is_active']
     list_filter = ['difficulty', 'status', 'is_active']
-    search_fields = ['title', 'instructor', 'description']
+    search_fields = ['title', 'instructor_id', 'description']
     list_editable = ['is_active']
     ordering = ['-id']
     

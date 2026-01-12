@@ -107,7 +107,7 @@ class ClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = Class
         fields = [
-            'id', 'title', 'description', 'instructor', 'difficulty', 'difficulty_display',
+            'id', 'title', 'description', 'instructor_id', 'difficulty', 'difficulty_display',
             'status', 'status_display', 'mode', 'mode_display', 'thumbnail', 'start_date', 'start_date_formatted',
             'end_date', 'duration', 'max_participants', 'enrolled_count', 'is_full', 'is_joinable',
             'meeting_link', 'location', 'syllabus', 'is_active', 'order',
