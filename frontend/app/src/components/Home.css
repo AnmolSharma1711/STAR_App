@@ -215,9 +215,31 @@
 }
 
 .team-scroll-wrapper {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   position: relative;
   margin: 1rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: #667eea #f1f1f1;
+  -webkit-overflow-scrolling: touch;
+}
+
+.team-scroll-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.team-scroll-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.team-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+.team-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
 }
 
 .team-scroll-wrapper::before,
@@ -249,7 +271,7 @@
 
 /* Only animate if there are multiple cards */
 .team-scroll-wrapper:not(:has(.team-card:only-child)) .team-scroll {
-  animation: scroll 60s linear infinite;
+  animation: scroll 30s linear infinite;
 }
 
 .team-scroll:hover {
@@ -293,13 +315,37 @@
   overflow: hidden;
 }
 
+.team-card-back {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #667eea #f1f1f1;
+  transform: rotateY(180deg);
+}
+
+.team-card-back::-webkit-scrollbar {
+  width: 6px;
+}
+
+.team-card-back::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.team-card-back::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+.team-card-back::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
+}
+
 .team-card:hover .team-card-face {
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
 }
 
-.team-card-back {
-  transform: rotateY(180deg);
-}
+
 
 .team-avatar-wrapper {
   width: 120px;
@@ -355,11 +401,8 @@
   line-height: 1.5;
   color: #444;
   margin: 0.5rem 0 0.75rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .team-tech {
@@ -368,11 +411,6 @@
   margin-bottom: 0.5rem;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .team-tech-label {
