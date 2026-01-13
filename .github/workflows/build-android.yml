@@ -60,6 +60,9 @@ jobs:
             echo "⚠ Preferences plugin not found in capacitor.plugins.json"
           fi
 
+      - name: Accept Android licenses
+        run: yes | sdkmanager --licenses || true
+
       - name: Build APK
         working-directory: android-app/android
         env:
@@ -68,7 +71,13 @@ jobs:
         run: |
           echo "Using JAVA_HOME=$JAVA_HOME"
           chmod +x ./gradlew
-          ./gradlew assembleDebug --stacktrace --info
+          ./gradlew clean
+          ./gradlew assembleDebug --warning-mode all 2>&1 | tee build.log
+          if [ $? -ne 0 ]; then
+            echo "Build failed. Last 100 lines of output:"
+            tail -n 100 build.log
+            exit 1
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
