@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import SiteSettings, Sponsor, SocialLink, Class, Resource, TeamMember, Domain, Member, Meeting
+from .models import SiteSettings, Sponsor, SocialLink, Class, Resource, TeamMember, Domain, Member
 
 
 class SiteSettingsSerializer(serializers.ModelSerializer):
@@ -103,14 +103,11 @@ class ClassSerializer(serializers.ModelSerializer):
     is_full = serializers.ReadOnlyField()
     is_joinable = serializers.ReadOnlyField()
     start_date_formatted = serializers.SerializerMethodField()
-    instructor_display = serializers.ReadOnlyField()
-    instructor_id = serializers.IntegerField(source='instructor.id', read_only=True, allow_null=True)
     
     class Meta:
         model = Class
         fields = [
-            'id', 'title', 'description', 'instructor', 'instructor_id', 'instructor_display', 'instructor_name',
-            'difficulty', 'difficulty_display',
+            'id', 'title', 'description', 'instructor_id', 'difficulty', 'difficulty_display',
             'status', 'status_display', 'mode', 'mode_display', 'thumbnail', 'start_date', 'start_date_formatted',
             'end_date', 'duration', 'max_participants', 'enrolled_count', 'is_full', 'is_joinable',
             'meeting_link', 'location', 'syllabus', 'is_active', 'order',
@@ -123,9 +120,12 @@ class ClassSerializer(serializers.ModelSerializer):
     
     def get_start_date_formatted(self, obj):
         """Format start date"""
-        start_date = obj.start_date
-        # Simple formatting without timezone conversion to avoid issues
-        return start_date.strftime('%B %d, %Y at %I:%M %p')
+        if not obj.start_date:
+            return "Date not set"
+        try:
+            return obj.start_date.strftime('%B %d, %Y at %I:%M %p')
+        except Exception as e:
+            return f"Invalid date: {str(e)}"
 
 
 class ResourceSerializer(serializers.ModelSerializer):
@@ -140,50 +140,3 @@ class ResourceSerializer(serializers.ModelSerializer):
             'is_active', 'download_count', 'order',
             'created_at', 'updated_at'
         ]
-
-
-class MeetingSerializer(serializers.ModelSerializer):
-    scheduled_by_id = serializers.IntegerField(source='scheduled_by.id', read_only=True)
-    scheduled_by_name = serializers.CharField(source='scheduled_by.name', read_only=True)
-    speaker_id = serializers.IntegerField(source='speaker.id', read_only=True, allow_null=True)
-    speaker_name = serializers.CharField(source='speaker_display', read_only=True)
-    domains_detail = DomainSerializer(source='domains', read_only=True, many=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
-    computed_status = serializers.SerializerMethodField()
-    is_for_all_domains = serializers.ReadOnlyField()
-    duration_minutes = serializers.ReadOnlyField()
-    scheduled_date_formatted = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = Meeting
-        fields = [
-            'id', 'title', 'description', 'scheduled_by', 'scheduled_by_id', 'scheduled_by_name',
-            'speaker', 'speaker_id', 'speaker_name', 'speaker_other',
-            'domains', 'domains_detail', 'is_for_all_domains',
-            'scheduled_date', 'scheduled_date_formatted', 'end_time', 'duration_minutes',
-            'meeting_link', 'location',
-            'status', 'status_display', 'computed_status',
-            'is_active', 'created_at', 'updated_at'
-        ]
-    
-    def get_computed_status(self, obj):
-        """Return computed status based on time"""
-        return obj.computed_status
-    
-    def get_scheduled_date_formatted(self, obj):
-        """Format scheduled date in IST timezone"""
-        from django.utils import timezone
-        from zoneinfo import ZoneInfo
-        
-        scheduled_date = obj.scheduled_date
-        
-        # If naive datetime, make it aware
-        if scheduled_date.tzinfo is None:
-            scheduled_date = timezone.make_aware(scheduled_date)
-        
-        # Convert to IST timezone
-        ist = ZoneInfo('Asia/Kolkata')
-        scheduled_date_ist = scheduled_date.astimezone(ist)
-        
-        # Format: "December 28, 2025 at 02:30 PM"
-        return scheduled_date_ist.strftime('%B %d, %Y at %I:%M %p')

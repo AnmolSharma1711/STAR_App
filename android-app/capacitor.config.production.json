@@ -1,0 +1,18 @@
+# Production Capacitor Configuration
+# Use this for deployment
+{
+  "appId": "com.tars.app",
+  "appName": "TARS",
+  "webDir": "dist",
+  "server": {
+    "url": "https://tars-android-backend.onrender.com",
+    "cleartext": false,
+    "androidScheme": "https",
+    "allowNavigation": [
+      "https://tars-android-backend.onrender.com"
+    ]
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

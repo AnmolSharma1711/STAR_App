@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test</title>
+</head>
+<body>
+    <h1>Testing Backend Connection</h1>
+    <button onclick="testAPI()">Test API Connection</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testAPI() {
+            const urls = [
+                'http://localhost:8000/api/info/',
+                'http://127.0.0.1:8000/api/info/',
+                'http://192.168.198.127:8000/api/info/',
+                'http://192.168.56.1:8000/api/info/'
+            ];
+
+            document.getElementById('result').textContent = 'Testing...\n\n';
+
+            for (const url of urls) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        document.getElementById('result').textContent += `✓ SUCCESS: ${url}\n${JSON.stringify(data, null, 2)}\n\n`;
+                    } else {
+                        document.getElementById('result').textContent += `✗ FAILED: ${url} - Status: ${response.status}\n\n`;
+                    }
+                } catch (error) {
+                    document.getElementById('result').textContent += `✗ ERROR: ${url} - ${error.message}\n\n`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
