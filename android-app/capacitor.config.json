@@ -1,0 +1,12 @@
+{
+  "appId": "com.tars.app",
+  "appName": "TARS",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "android": {
+    "path": "android"
+  }
+}
