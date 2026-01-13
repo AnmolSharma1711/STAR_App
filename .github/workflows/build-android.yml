@@ -29,16 +29,15 @@ jobs:
 
       - name: Install dependencies
         working-directory: android-app
-        run: npm install
+        run: |
+          npm install
+          npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor/assets --save-dev
 
       - name: Build frontend
         working-directory: android-app
         env:
           VITE_API_URL: https://star-backend-q0t7.onrender.com
         run: npm run build
-
-      - name: Install Capacitor CLI globally
-        run: npm install -g @capacitor/cli @capacitor/assets
 
       - name: Generate app icons
         working-directory: android-app
