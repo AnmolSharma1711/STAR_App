@@ -39,10 +39,6 @@ jobs:
           VITE_API_URL: https://star-backend-q0t7.onrender.com
         run: npm run build
 
-      - name: Generate app icons
-        working-directory: android-app
-        run: npx @capacitor/assets generate --android
-
       - name: Initialize Android platform
         working-directory: android-app
         run: |
@@ -62,8 +58,14 @@ jobs:
               }
           }
           EOF
-          
-          npx cap sync android
+
+      - name: Generate app icons
+        working-directory: android-app
+        run: npx @capacitor/assets generate --android
+
+      - name: Sync Capacitor
+        working-directory: android-app
+        run: npx cap sync android
 
       - name: Verify Capacitor Preferences plugin
         working-directory: android-app
