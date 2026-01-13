@@ -6,6 +6,7 @@
   justify-content: center;
   background: #0a0a0a;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .login-box {

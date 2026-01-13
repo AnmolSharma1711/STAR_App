@@ -10,7 +10,7 @@
 
 /* University Logo - Top Right */
 .university-logo-wrapper {
-  position: fixed;
+  position: absolute;
   top: 2rem;
   right: 2rem;
   z-index: 100;
@@ -215,9 +215,30 @@
 }
 
 .team-scroll-wrapper {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   position: relative;
   margin: 1rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: #667eea #f0f0f0;
+}
+
+.team-scroll-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.team-scroll-wrapper::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 10px;
+}
+
+.team-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+.team-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
 }
 
 .team-scroll-wrapper::before,
