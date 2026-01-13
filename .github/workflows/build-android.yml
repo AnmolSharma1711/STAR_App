@@ -43,16 +43,12 @@ jobs:
         working-directory: android-app
         run: npx @capacitor/assets generate --android
 
-      - name: Add Android platform if needed
+      - name: Initialize Android platform
         working-directory: android-app
         run: |
-          if [ ! -d "android" ]; then
-            npx cap add android
-          fi
-
-      - name: Sync Capacitor
-        working-directory: android-app
-        run: npx cap sync android
+          rm -rf android
+          npx cap add android
+          npx cap sync android
 
       - name: Verify Capacitor Preferences plugin
         working-directory: android-app
