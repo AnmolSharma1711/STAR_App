@@ -1,6 +1,6 @@
 {
-  "appId": "com.tars.app",
-  "appName": "TARS",
+  "appId": "com.star.app",
+  "appName": "STAR",
   "webDir": "dist",
   "server": {
     "androidScheme": "https",
