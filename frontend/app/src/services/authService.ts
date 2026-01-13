@@ -1,19 +1,5 @@
-// Capacitor Preferences - dynamically imported for mobile support
-// Falls back to localStorage-only for pure web environments
-let Preferences: typeof import('@capacitor/preferences').Preferences | null = null;
-
-// Try to load Capacitor Preferences (will work on mobile and web with Capacitor)
-try {
-  // Dynamic import at module level for environments that support it
-  import('@capacitor/preferences').then(module => {
-    Preferences = module.Preferences;
-    console.log('[Storage] Capacitor Preferences loaded successfully');
-  }).catch(() => {
-    console.log('[Storage] Capacitor Preferences not available, using localStorage only');
-  });
-} catch {
-  console.log('[Storage] Capacitor Preferences not available, using localStorage only');
-}
+// Capacitor Preferences - properly imported
+import { Preferences } from '@capacitor/preferences';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -42,36 +28,32 @@ export interface LoginResponse {
   tokens: AuthTokens;
 }
 
-// Storage helper that uses Capacitor Preferences for mobile persistence
+// Storage helper that uses Capacitor Preferences for persistent storage
 const storage = {
   async setItem(key: string, value: string): Promise<void> {
     // Always set in localStorage first for immediate access
     localStorage.setItem(key, value);
 
-    // Persist via Preferences if available (native on Android/iOS; web fallback in browser)
-    if (Preferences) {
-      try {
-        await Preferences.set({ key, value });
-        console.log(`[Storage] Set ${key} via Preferences`);
-      } catch (error) {
-        console.error(`[Storage] Preferences.set failed for ${key}:`, error);
-      }
+    // Persist via Preferences (native on Android/iOS; web fallback in browser)
+    try {
+      await Preferences.set({ key, value });
+      console.log(`[Storage] Set ${key} via Preferences`);
+    } catch (error) {
+      console.error(`[Storage] Preferences.set failed for ${key}:`, error);
     }
   },
 
   async getItem(key: string): Promise<string | null> {
-    // Preferences is the source of truth on mobile. If it fails or unavailable, fall back to localStorage.
-    if (Preferences) {
-      try {
-        const { value } = await Preferences.get({ key });
-        if (value !== null) {
-          console.log(`[Storage] Got ${key} via Preferences`);
-          localStorage.setItem(key, value);
-          return value;
-        }
-      } catch (error) {
-        console.error(`[Storage] Preferences.get failed for ${key}:`, error);
+    // Preferences is the source of truth. If it fails, fall back to localStorage.
+    try {
+      const { value } = await Preferences.get({ key });
+      if (value !== null) {
+        console.log(`[Storage] Got ${key} via Preferences`);
+        localStorage.setItem(key, value);
+        return value;
       }
+    } catch (error) {
+      console.error(`[Storage] Preferences.get failed for ${key}:`, error);
     }
 
     const value = localStorage.getItem(key);
@@ -88,13 +70,11 @@ const storage = {
     // Remove from localStorage
     localStorage.removeItem(key);
 
-    if (Preferences) {
-      try {
-        await Preferences.remove({ key });
-        console.log(`[Storage] Removed ${key} via Preferences`);
-      } catch (error) {
-        console.error(`[Storage] Preferences.remove failed for ${key}:`, error);
-      }
+    try {
+      await Preferences.remove({ key });
+      console.log(`[Storage] Removed ${key} via Preferences`);
+    } catch (error) {
+      console.error(`[Storage] Preferences.remove failed for ${key}:`, error);
     }
   }
 };
