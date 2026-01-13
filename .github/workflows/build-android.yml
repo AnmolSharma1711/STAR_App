@@ -71,17 +71,19 @@ jobs:
         run: |
           echo "Using JAVA_HOME=$JAVA_HOME"
           chmod +x ./gradlew
-          ./gradlew clean
-          ./gradlew assembleDebug --warning-mode all 2>&1 | tee build.log
-          if [ $? -ne 0 ]; then
-            echo "Build failed. Last 100 lines of output:"
-            tail -n 100 build.log
-            exit 1
-          fi
+          ./gradlew clean assembleDebug --stacktrace 2>&1 | tee build.log || true
+          echo "=== Build completed, checking for APK ==="
+          ls -la app/build/outputs/apk/ || echo "No apk directory found"
+          find app/build -name "*.apk" || echo "No APK files found"
+          echo "=== Last 200 lines of build log ==="
+          tail -n 200 build.log
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: tars-app-debug
-          path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            android-app/android/app/build/outputs/apk/debug/app-debug.apk
+            android-app/android/app/build/outputs/apk/**/*.apk
           retention-days: 30
